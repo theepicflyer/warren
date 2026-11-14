@@ -5,6 +5,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import sharp from "sharp";
 import type { Db } from "./db.js";
 import { files, type StoredFile } from "./schema.js";
 
@@ -45,4 +46,32 @@ export function readFile(dataDir: string, file: StoredFile): Buffer | null {
   } catch {
     return null;
   }
+}
+
+/** Claude downsizes anything larger, so storing more only costs disk and upload time. */
+export const MAX_IMAGE_EDGE = 1568;
+
+export class ImageError extends Error {}
+
+/**
+ * Store a photo for the agent: turned upright, shrunk to what Claude can use, and saved as JPEG.
+ * Throws `ImageError` if the data isn't an image.
+ */
+export async function saveImage(
+  db: Db,
+  dataDir: string,
+  input: { userId: number; data: Buffer },
+): Promise<StoredFile> {
+  let jpeg: Buffer;
+  try {
+    jpeg = await sharp(input.data)
+      .rotate() // apply the camera's orientation
+      .resize({ width: MAX_IMAGE_EDGE, height: MAX_IMAGE_EDGE, fit: "inside", withoutEnlargement: true })
+      .flatten({ background: "#ffffff" })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+  } catch {
+    throw new ImageError("That file isn't an image I can read (JPEG, PNG or WebP).");
+  }
+  return saveFile(db, dataDir, { userId: input.userId, mediaType: "image/jpeg", data: jpeg });
 }

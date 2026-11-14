@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import sharp from "sharp";
 import { expect, test } from "vitest";
 import { DomainError } from "../src/server/index.js";
 import { call, FakeClaude, message, notes, say, testApp, testConfig } from "./helpers.js";
@@ -83,21 +84,57 @@ test("without an API key the assistant says so", async () => {
   expect(res.status).toBe(503);
 });
 
-test("uploads are stored once and only their owner can read them", async () => {
+async function photo(width: number, height: number): Promise<File> {
+  const data = await sharp({ create: { width, height, channels: 3, background: "#c94f3d" } }).png().toBuffer();
+  return new File([new Uint8Array(data)], "meal.png", { type: "image/png" });
+}
+
+test("an uploaded photo is shrunk, stored as JPEG, and only its owner can read it", async () => {
   const app = testApp();
   const req = await signedIn(app);
-  const form = new FormData();
-  form.set("file", new File([new Uint8Array([1, 2, 3])], "a.png", { type: "image/png" }));
   const cookie = (await app.http.request("/api/auth/dev-login", { method: "POST", headers: json, body: JSON.stringify({ name: "Alice" }) })).headers.get("set-cookie")!.split(";")[0]!;
-  const up = await app.http.request("/api/files", { method: "POST", headers: { "x-warren": "1", cookie }, body: form });
-  const { id } = await up.json();
+  const send = (file: File) => {
+    const form = new FormData();
+    form.set("file", file);
+    return app.http.request("/api/files", { method: "POST", headers: { "x-warren": "1", cookie }, body: form });
+  };
+  const { id } = await (await send(await photo(4000, 2000))).json();
   const back = await req(`/api/files/${id}`);
-  expect(new Uint8Array(await back.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+  expect(back.headers.get("content-type")).toBe("image/jpeg");
+  const stored = await sharp(Buffer.from(await back.arrayBuffer())).metadata();
+  expect([stored.format, stored.width, stored.height]).toEqual(["jpeg", 1568, 784]);
   expect((await (await signedIn(app, "Bob"))(`/api/files/${id}`)).status).toBe(404);
 
-  const bad = new FormData();
-  bad.set("file", new File(["x"], "a.txt", { type: "text/plain" }));
-  expect((await app.http.request("/api/files", { method: "POST", headers: { "x-warren": "1", cookie }, body: bad })).status).toBe(415);
+  const bad = await send(new File(["not an image"], "a.txt", { type: "text/plain" }));
+  expect([bad.status, (await bad.json()).detail]).toEqual([400, expect.stringContaining("isn't an image")]);
+});
+
+test("words and photos can be sent to the agent in one request", async () => {
+  const claude = new FakeClaude([message([say("A red plate.")], "end_turn")]);
+  const app = testApp({ anthropic: claude });
+  const cookie = (await app.http.request("/api/auth/dev-login", { method: "POST", headers: json, body: JSON.stringify({ name: "Alice" }) })).headers.get("set-cookie")!.split(";")[0]!;
+  const post = (form: FormData) =>
+    app.http.request("/api/agent/turns", { method: "POST", headers: { "x-warren": "1", cookie }, body: form });
+
+  const form = new FormData();
+  form.set("scope", "2026-03-03");
+  form.set("text", "lunch");
+  form.append("photos", await photo(300, 200));
+  form.append("photos", await photo(200, 300));
+  const events = (await (await post(form)).text()).split("\n").filter((l) => l.startsWith("data: ")).map((l) => JSON.parse(l.slice(6)));
+  expect(events.at(-1).turn.file_ids).toHaveLength(2);
+  const sent = claude.requests[0]!.messages[0].content;
+  expect(sent.map((b: { type: string }) => b.type)).toEqual(["text", "image", "text", "image", "text"]);
+  expect(sent[1].source.media_type).toBe("image/jpeg");
+
+  const many = new FormData();
+  many.set("scope", "2026-03-03");
+  for (let i = 0; i < 7; i++) many.append("photos", await photo(10, 10));
+  expect((await post(many)).status).toBe(400);
+  const junk = new FormData();
+  junk.set("scope", "2026-03-03");
+  junk.append("photos", new File(["nope"], "x.jpg", { type: "image/jpeg" }));
+  expect((await post(junk)).status).toBe(400);
 });
 
 test("the built web app is served, with page addresses falling back to its shell", async () => {

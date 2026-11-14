@@ -4,7 +4,7 @@ Guidance for working in this repository.
 
 ## Project
 
-Warren is the framework under the household's apps (Bao, Cache): TypeScript end to end, one container, one Node process, one SQLite file, one origin. `src/server/` is the server package (`warren/server`). The web package and Web Push are still to come. Burrow is the design system and is separate: Warren never decides how things look.
+Warren is the framework under the household's apps (Bao, Cache): TypeScript end to end, one container, one Node process, one SQLite file, one origin. `src/server/` is the server package (`warren/server`). The web package is still to come. Burrow is the design system and is separate: Warren never decides how things look.
 
 Apps install Warren from this repository at a tag. A change here reaches production only when an app bumps its pin and releases.
 
@@ -26,7 +26,9 @@ npm run build          # dist/, what apps import
 - `changes.ts`: undo. A tool reports its writes with `ctx.changes.created(table, id)` or `ctx.changes.track(table, id, fn)`; snapshots are raw rows, so undo is generic.
 - `mcp.ts`: the OAuth proxy in front of Pocket ID. `auth.ts`: browser sign-in and the CSRF header.
 - `db.ts`, `schema.ts`: Drizzle over better-sqlite3. Warren's tables are prefixed `warren_`; its migrations run before the app's, each set with its own bookkeeping table.
-- `scheduler.ts`, `backup.ts`, `files.ts`, `secrets.ts`, `time.ts`: small and self-explanatory.
+- `push.ts`: Web Push. Warren keeps subscriptions and sends (`deliver` drops devices that are gone); the app decides what and when, in a job. Endpoints are limited to `PUSH_HOSTS`.
+- `files.ts`: uploads. `saveImage` normalises a photo with sharp before it is stored.
+- `scheduler.ts`, `backup.ts`, `secrets.ts`, `time.ts`: small and self-explanatory.
 
 ## Rules that keep the agent cheap and correct
 

@@ -15,13 +15,17 @@ import { lastSnapshotAt, snapshot } from "./backup.js";
 import { type Config, loadConfig } from "./config.js";
 import { DB_FILE, type Database_, type Db, openDatabase, runMigrations } from "./db.js";
 import { createMcp } from "./mcp.js";
+import { createSender, type PushHooks, pushRoutes, type Sender } from "./push.js";
 import { daily, type Job, startScheduler } from "./scheduler.js";
+import type { User } from "./schema.js";
 import { deriveKey, masterSecret } from "./secrets.js";
 import { DomainError, type Tool } from "./tools.js";
 
 export interface AppContext {
   db: Db;
   config: Config;
+  /** Sends a notification to one device; null unless the app turned push on. */
+  push: Sender | null;
 }
 
 export interface AppOptions {
@@ -42,8 +46,13 @@ export interface AppOptions {
   jobs?(ctx: AppContext): Job[];
   /** Runs after migrations, before serving (loading reference data). */
   onStart?(ctx: AppContext): void | Promise<void>;
-  /** Tests pass a fake. */
+  /** Extra fields for GET /api/me (the person's settings in this app). */
+  me?(user: User, ctx: AppContext): Record<string, unknown>;
+  /** Turn on Web Push: the routes under /api/push, and `ctx.push` for jobs to send with. */
+  push?: PushHooks;
+  /** Tests pass scripted stand-ins for Claude and for the push services. */
   anthropic?: AgentClient;
+  pushSender?: Sender;
 }
 
 export interface WarrenApp {
@@ -53,6 +62,8 @@ export interface WarrenApp {
   /** Everything except MCP, for tests: `app.http.request("/api/health")`. */
   http: Hono;
   jobs: Job[];
+  /** Sends a notification to one device; null unless the app turned push on. */
+  push: Sender | null;
   /** Listen on config.host:config.port, with MCP mounted. */
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -106,7 +117,8 @@ export function createApp(options: AppOptions): WarrenApp {
     options.migrations ? [{ folder: options.migrations, table: `${options.name}_migrations` }] : [],
   );
   const { db } = database;
-  const ctx: AppContext = { db, config };
+  const push = options.push ? (options.pushSender ?? createSender(config)) : null;
+  const ctx: AppContext = { db, config, push };
   const secret = masterSecret(config.dataDir);
   const tools = options.tools ?? [];
 
@@ -114,6 +126,7 @@ export function createApp(options: AppOptions): WarrenApp {
     db,
     config,
     appName: options.name,
+    me: options.me ? (user) => options.me!(user, ctx) : undefined,
     cookieKey: deriveKey(secret, "session-cookie"),
   });
 
@@ -156,6 +169,9 @@ export function createApp(options: AppOptions): WarrenApp {
       ),
     );
   }
+  if (options.push && push) {
+    api.route("/", pushRoutes({ db, config, send: push, hooks: options.push }));
+  }
   options.routes?.(api, ctx);
   http.route("/api", api);
   http.all("/api/*", (c) => c.json({ detail: "Not found" }, 404));
@@ -181,6 +197,7 @@ export function createApp(options: AppOptions): WarrenApp {
     database,
     http,
     jobs,
+    push,
     async start() {
       await options.onStart?.(ctx);
       mcp = await createMcp({

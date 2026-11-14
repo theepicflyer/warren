@@ -13,6 +13,7 @@ const optional = z
 export const DEFAULT_MCP_REDIRECT_URIS = [
   "https://claude.ai/api/mcp/auth_callback",
   "https://claude.com/api/mcp/auth_callback",
+  "https://agent.meta.ai/api/hatch/oauth/callback",
   "http://localhost:*",
   "http://127.0.0.1:*",
 ];
@@ -49,6 +50,9 @@ export const envSchema = z.object({
   AGENT_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("low"),
   AGENT_MAX_TOKENS: z.coerce.number().int().default(16000),
 
+  /** Who push services can contact about our notifications: an https: or mailto: URL. Default: PUBLIC_URL's host. */
+  VAPID_SUBJECT: optional,
+
   /** Local hour at which the daily snapshot is written to DATA_DIR/backup. */
   SNAPSHOT_HOUR: z.coerce.number().int().min(0).max(23).default(3),
   /** Tests turn the once-a-minute scheduler off and call jobs themselves. */
@@ -75,6 +79,7 @@ export interface Config {
   appVersion: string;
   anthropicApiKey: string | undefined;
   agent: { model: string; effort: Env["AGENT_EFFORT"]; maxTokens: number };
+  vapidSubject: string | undefined;
   snapshotHour: number;
   scheduler: boolean;
   https: boolean;
@@ -120,6 +125,7 @@ export function configFromEnv(env: Env): Config {
     appVersion: env.APP_VERSION,
     anthropicApiKey: env.ANTHROPIC_API_KEY,
     agent: { model: env.AGENT_MODEL, effort: env.AGENT_EFFORT, maxTokens: env.AGENT_MAX_TOKENS },
+    vapidSubject: env.VAPID_SUBJECT,
     snapshotHour: env.SNAPSHOT_HOUR,
     scheduler: env.SCHEDULER,
     https,

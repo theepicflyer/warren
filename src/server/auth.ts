@@ -20,6 +20,8 @@ export interface AuthDeps {
   appName: string;
   /** Key for signing cookies, derived from the deployment's secret. */
   cookieKey: string;
+  /** Extra fields for GET /api/me. */
+  me?(user: User): Record<string, unknown>;
 }
 
 export function requireCsrfHeader(): MiddlewareHandler {
@@ -83,7 +85,7 @@ export function createAuth(deps: AuthDeps) {
   routes.get("/api/me", async (c) => {
     const user = await currentUser(c);
     if (!user) return c.json({ detail: "Not signed in" }, 401);
-    return c.json({ id: user.id, name: user.name, email: user.email });
+    return c.json({ id: user.id, name: user.name, email: user.email, ...deps.me?.(user) });
   });
 
   routes.get("/auth/login", async (c) => {

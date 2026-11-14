@@ -99,6 +99,22 @@ export const changes = sqliteTable(
   (t) => [index("warren_changes_turn").on(t.turnId)],
 );
 
+/** A device that turned notifications on: a browser's Web Push subscription. */
+export const pushSubscriptions = sqliteTable(
+  "warren_push_subscriptions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("warren_push_subscriptions_user").on(t.userId)],
+);
+
 export const meta = sqliteTable("warren_meta", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -109,3 +125,4 @@ export type Thread = typeof threads.$inferSelect;
 export type Turn = typeof turns.$inferSelect;
 export type Change = typeof changes.$inferSelect;
 export type StoredFile = typeof files.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;

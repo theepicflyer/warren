@@ -47,7 +47,15 @@ export function turnChanges(db: Db, turnId: number): ChangeLog {
   };
 }
 
-function restore(db: Db, table: string, id: number, row: RawRow): void {
+/** A snapshot value as SQLite takes it. Raw rows only hold these already; imported snapshots may not. */
+function bindable(value: unknown): unknown {
+  if (typeof value === "boolean") return value ? 1 : 0;
+  if (value !== null && typeof value === "object") return JSON.stringify(value);
+  return value;
+}
+
+function restore(db: Db, table: string, id: number, snapshot: RawRow): void {
+  const row = Object.fromEntries(Object.entries(snapshot).map(([k, v]) => [k, bindable(v)]));
   const t = sql.identifier(table);
   const columns = Object.keys(row).filter((c) => c !== "id");
   if (rawRow(db, table, id)) {

@@ -24,9 +24,10 @@ Warren provides everything around the domain layer, so an app is its tables, its
 | Database | SQLite (WAL) through Drizzle, with Warren's migrations and then the app's. |
 | Scheduler | Jobs checked once a minute in the same process; `daily` runs once per local day and catches up after downtime. |
 | Backup | A consistent snapshot each day, and `warren restore`. |
-| Files | Uploaded photos, written once and never changed. |
+| Files | Uploaded photos: turned upright, shrunk to what Claude can use, written once and never changed. |
+| Web Push | Device subscriptions and sending, limited to the browsers' own push services. What to send and when is the app's job. |
 
-The web package (app shell, navigation, the agent sheet, Burrow's components) and Web Push are not here yet.
+The web package (app shell, navigation, the agent sheet, Burrow's components) is not here yet.
 
 ## An app
 
@@ -87,6 +88,7 @@ All from the environment (`src/server/config.ts` has the full list):
 | `ANTHROPIC_API_KEY`, `AGENT_MODEL`, `AGENT_EFFORT` | The in-app agent. |
 | `TIMEZONE` | The household's clock, for days and daily jobs. Default `Asia/Singapore`. |
 | `SNAPSHOT_HOUR` | Local hour of the daily snapshot. Default `3`. |
+| `VAPID_SUBJECT` | Who push services can contact about notifications. Default: the host of `PUBLIC_URL`. |
 | `DEV_LOGIN`, `MCP_DEV_USER` | Local development only; both are refused on an https site. |
 
 ## Backup
@@ -99,6 +101,7 @@ Everything an app must keep is under `DATA_DIR`, and nothing else is:
 | `backup/app.sqlite` | A consistent snapshot, rewritten each day at `SNAPSHOT_HOUR`. |
 | `files/` | Uploads. Written once, never changed. |
 | `secret` | The deployment's key. Without it everyone is signed out and MCP clients are disconnected. |
+| `vapid.json` | The Web Push key. Without it every device has to turn notifications on again. |
 | `mcp/` | The OAuth proxy's store: which MCP clients are connected. |
 
 Point the backup tool at `DATA_DIR` and exclude `app.sqlite*` at its top level. `/api/health` reports `last_snapshot_at`.

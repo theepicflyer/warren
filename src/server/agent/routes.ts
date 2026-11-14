@@ -4,7 +4,7 @@ import { streamSSE } from "hono/streaming";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { AppEnv } from "../auth.js";
-import { readFile, saveFile } from "../files.js";
+import { ImageError, readFile, saveImage } from "../files.js";
 import { files } from "../schema.js";
 import { DomainError } from "../tools.js";
 import { type AgentDeps, rateTurn, runTurn, scopeTurns, serializeTurn, undoTurn } from "./runner.js";
@@ -13,7 +13,7 @@ const Scope = z.string().min(1).max(64);
 const TurnIn = z.object({
   scope: Scope,
   text: z.string().max(8000).default(""),
-  file_ids: z.array(z.number().int()).max(8).default([]),
+  file_ids: z.array(z.number().int()).default([]),
   thread_id: z.number().int().nullish(),
 });
 const RatingIn = z.object({
@@ -21,7 +21,8 @@ const RatingIn = z.object({
   note: z.string().nullish(),
 });
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+const MAX_PHOTOS = 6;
 
 /** Routes under /api, for signed-in users. `deps` is null when no API key is configured. */
 export function agentRoutes(deps: AgentDeps | null, base: Omit<AgentDeps, "client" | "config"> ): Hono<AppEnv> {
@@ -37,20 +38,58 @@ export function agentRoutes(deps: AgentDeps | null, base: Omit<AgentDeps, "clien
     }
   };
 
+  /**
+   * One message to the agent: JSON `{scope, text, file_ids, thread_id}`, or a form with `scope`,
+   * `text`, `thread_id` and `photos`, so words and photos arrive together.
+   */
   app.post("/agent/turns", async (c) => {
     if (!deps) return c.json({ detail: "The assistant isn't set up (no API key)." }, 503);
-    const body = TurnIn.safeParse(await c.req.json().catch(() => null));
+    const user = c.var.user;
+    let raw: unknown;
+    const uploads: File[] = [];
+    if ((c.req.header("content-type") ?? "").startsWith("multipart/form-data")) {
+      const form = await c.req.formData().catch(() => null);
+      if (!form) return c.json({ detail: "Invalid request" }, 400);
+      const threadId = form.get("thread_id");
+      raw = {
+        scope: form.get("scope"),
+        text: form.get("text") ?? "",
+        thread_id: typeof threadId === "string" && threadId ? Number(threadId) : null,
+      };
+      for (const item of form.getAll("photos")) {
+        if (item instanceof File && item.size) uploads.push(item);
+      }
+    } else {
+      raw = await c.req.json().catch(() => null);
+    }
+    const body = TurnIn.safeParse(raw);
     if (!body.success) return c.json({ detail: "Invalid request" }, 400);
-    if (!body.data.text.trim() && !body.data.file_ids.length) {
+    if (uploads.length + body.data.file_ids.length > MAX_PHOTOS) {
+      return c.json({ detail: `Send at most ${MAX_PHOTOS} photos at a time` }, 400);
+    }
+    if (uploads.some((u) => u.size > MAX_UPLOAD_BYTES)) {
+      return c.json({ detail: "Photo too large" }, 413);
+    }
+    const fileIds = [...body.data.file_ids];
+    try {
+      for (const upload of uploads) {
+        const data = Buffer.from(await upload.arrayBuffer());
+        fileIds.push((await saveImage(db, dataDir, { userId: user.id, data })).id);
+      }
+    } catch (err) {
+      if (err instanceof ImageError) return c.json({ detail: err.message }, 400);
+      throw err;
+    }
+    if (!body.data.text.trim() && !fileIds.length) {
       return c.json({ detail: "Say something or attach a photo" }, 400);
     }
-    const user = c.var.user;
+    c.header("X-Accel-Buffering", "no");
     return streamSSE(c, async (stream) => {
       const events = runTurn(deps, {
         userId: user.id,
         scope: body.data.scope,
         text: body.data.text,
-        fileIds: body.data.file_ids,
+        fileIds,
         threadId: body.data.thread_id,
       });
       // The turn runs to the end even if the browser goes away, so it is never left half done.
@@ -89,16 +128,13 @@ export function agentRoutes(deps: AgentDeps | null, base: Omit<AgentDeps, "clien
     const form = await c.req.formData().catch(() => null);
     const upload = form?.get("file");
     if (!(upload instanceof File)) return c.json({ detail: "file required" }, 400);
-    if (upload.size > MAX_UPLOAD_BYTES) return c.json({ detail: "File is too large" }, 413);
+    if (upload.size > MAX_UPLOAD_BYTES) return c.json({ detail: "Photo too large" }, 413);
     try {
-      const stored = saveFile(db, dataDir, {
-        userId: c.var.user.id,
-        mediaType: upload.type,
-        data: Buffer.from(await upload.arrayBuffer()),
-      });
-      return c.json({ id: stored.id });
-    } catch {
-      return c.json({ detail: "Unsupported file type" }, 415);
+      const data = Buffer.from(await upload.arrayBuffer());
+      return c.json({ id: (await saveImage(db, dataDir, { userId: c.var.user.id, data })).id });
+    } catch (err) {
+      if (err instanceof ImageError) return c.json({ detail: err.message }, 400);
+      throw err;
     }
   });
 

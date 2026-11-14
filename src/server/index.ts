@@ -13,10 +13,20 @@ export {
   runMigrations,
   setMeta,
 } from "./db.js";
-export { readFile, saveFile } from "./files.js";
+export { ImageError, readFile, saveFile, saveImage } from "./files.js";
+export {
+  checkEndpoint,
+  deliver,
+  Gone,
+  type Notification,
+  type PushHooks,
+  type Sender,
+  subscriptionsOf,
+  vapidKeys,
+} from "./push.js";
 export { daily, type Job, runJobs, startScheduler } from "./scheduler.js";
 export * as schema from "./schema.js";
-export type { Change, StoredFile, Thread, Turn, User } from "./schema.js";
+export type { Change, PushSubscription, StoredFile, Thread, Turn, User } from "./schema.js";
 export { type LocalTime, localTime } from "./time.js";
 export {
   defineTool,
