@@ -139,3 +139,7 @@ After changing `src/server/schema.ts`:
 ```bash
 npm run db:generate
 ```
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Shared framework for the household's apps: one container, one SQLite file, an in-app Claude agent and an MCP server over the same tools.",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=22.13"
