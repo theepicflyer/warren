@@ -9,7 +9,7 @@ const SPRING = 'cubic-bezier(.34, 1.56, .64, 1)';
 
 /**
  * An attachment for a sheet's panel: dragging it down from a handle (elements matching `handle`,
- * default `[data-drag-handle]`; give them `touch-action: none`) moves it with the finger, and
+ * default `[data-drag-handle]`; give them `touch-action: none`; buttons and fields inside one keep their taps) moves it with the finger, and
  * letting go far or fast enough calls `onDismiss`. The panel's `translate` follows the finger, so it
  * adds to whatever transform its own transitions use; on dismiss it stays where the finger left it,
  * and the sheet's leaving transition carries on from there. While dragging, the panel's parent gets
@@ -28,7 +28,9 @@ export function dragToDismiss(options: { onDismiss: () => void; handle?: string 
 		};
 
 		const down = (e: PointerEvent) => {
-			if (e.button !== 0 || !(e.target as Element).closest(handle)) return;
+			const target = e.target as Element;
+			// a button or field inside the handle keeps its tap
+			if (e.button !== 0 || !target.closest(handle) || target.closest('button, a, input, textarea, select, [contenteditable]')) return;
 			start = { y: e.clientY, t: e.timeStamp, id: e.pointerId };
 			last = prev = { y: e.clientY, t: e.timeStamp };
 			panel.setPointerCapture(e.pointerId);
