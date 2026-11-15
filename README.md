@@ -1,6 +1,6 @@
 # Warren
 
-The shared framework under the household's apps. Burrow is how they look; Warren is how they are built.
+The shared framework under the household's apps. Burrow is how they look; Warren is how they are built, and it hosts Burrow too, so that the apps draw it from one place. Burrow's look itself comes from its design-system artifact and is only re-synced here, never edited.
 
 Every app has the same shape: one container, one Node process, one SQLite file, one origin. Inside it:
 
@@ -39,6 +39,19 @@ Warren provides everything around the domain layer, so an app is its tables, its
 | Motion (`fade`, `fly`, `rise`, `row`, `sheet`, `flip`, `slidingPill`, `Count`, `haptic`) | Transitions that stand still under reduced motion, a nav highlight that slides between items, numbers that count, and a short buzz on Android. |
 
 The app's web client depends on Warren too, at the same commit as its server, with `ignore-scripts=true` in `web/.npmrc` so npm doesn't build Warren's server half there. It imports source: `import { get, loaded } from 'warren/web'` and `import 'warren/web/motion.css'`. Because it is source, keep it out of Vite's dev pre-bundling: `optimizeDeps: { exclude: ['warren'] }` in `vite.config.ts` (the production build doesn't need it).
+
+`warren/burrow`, Burrow for the apps' SvelteKit clients. Generated from the design-system artifact's export in `burrow/` (see [burrow/README.md](burrow/README.md) to re-sync); nothing in it is drawn or coloured by hand:
+
+| Part | What it does |
+| --- | --- |
+| `warren/burrow/tokens.css` | The tokens as CSS variables: light by default, dark with the device, or pinned with `html[data-theme="light"]` / `"dark"`. The accent is tomato; an app with another home colour re-points `--accent` and `--accent-soft` after it. |
+| `warren/burrow/type.css` | The text styles as classes (`hero-number`, `page-title`, `card-title`, `body`, `body-strong`, `small`, `label`). |
+| `warren/burrow/burrow.css` | Burrow's `bh-*` component classes. Import it into a layer (`@import 'warren/burrow/burrow.css' layer(components);`) so the app's own styles win. The fonts are the app's to bundle. |
+| Art (`mascotSVG`, `traceSVG`, `trailSVG`, `worldSVG`, `HAB`, `TRAIL`, `ICONS`, ...) | The animals, traces, trails, habitats and icons as SVG strings, with their types (`Character`, `Mood`, `TraceName`, `TrailKind`, `IconName`...). |
+| `stashArt`, `wreathArt` | A fund's stash with 0 to 15 acorns and the month's wreath with 0 to 26 leaves lit. |
+| `Mascot`, `Trace`, `Habitat`, `Peek`, `World`, `Breadcrumbs`, `TunnelRow`, `Loader` | Svelte components over Burrow's classes, the same in every app. |
+
+Import it like `warren/web`: `import { Habitat, Mascot, type Mood } from 'warren/burrow'`, and the CSS from the app's stylesheet.
 
 Screens reached by going back should stand as they were left: `pageTransition` sets `html[data-wn-arrived]` (`forward`, `back`, `tab` or `same`) for the life of each screen, so an app turns its entrance animations off under `html[data-wn-arrived='back']`, and `Count` starts at its value there.
 
@@ -151,6 +164,12 @@ After changing `src/server/schema.ts`:
 
 ```bash
 npm run db:generate
+```
+
+After re-syncing Burrow's export into `burrow/export/` (steps in [burrow/README.md](burrow/README.md)):
+
+```bash
+npm run burrow
 ```
 
 ## Licence

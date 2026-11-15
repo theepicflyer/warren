@@ -12,5 +12,5 @@
     "types": [],
     "noEmit": true
   },
-  "include": ["src/web"]
+  "include": ["src/web", "src/burrow"]
 }

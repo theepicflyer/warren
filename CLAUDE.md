@@ -4,7 +4,7 @@ Guidance for working in this repository.
 
 ## Project
 
-Warren is the framework under the household's apps (Bao, Cache): TypeScript end to end, one container, one Node process, one SQLite file, one origin. `src/server/` is the server package (`warren/server`); `src/web/` is the web package (`warren/web`), for the apps' SvelteKit clients. Burrow is the design system and is separate: Warren decides how things behave and move, never how they look (colours, type, components).
+Warren is the framework under the household's apps (Bao, Cache): TypeScript end to end, one container, one Node process, one SQLite file, one origin. `src/server/` is the server package (`warren/server`); `src/web/` is the web package (`warren/web`), for the apps' SvelteKit clients. Burrow is the design system. Warren also hosts it (`burrow/`, `src/burrow/`, shipped as `warren/burrow`) so both apps draw it from one place, but Warren never decides how things look: the look (colours, type, art, component classes) is dictated by the Burrow artifact and only ever re-synced from it, never hand-edited here. Warren decides how things behave and move.
 
 Apps install Warren from this repository at a tag. A change here reaches production only when an app bumps its pin and releases.
 
@@ -12,10 +12,11 @@ Apps install Warren from this repository at a tag. A change here reaches product
 
 ```bash
 npm run check          # tsc (server and tests)
-npm run check:web      # svelte-check of src/web (tools/web-check pins TypeScript 6, which svelte-check needs)
+npm run check:web      # svelte-check of src/web and src/burrow (tools/web-check pins TypeScript 6, which svelte-check needs)
 npm test               # unit tests: no network, scripted Claude (test/helpers.ts)
 npm run test:pocketid  # needs Docker: real Pocket ID, a browser, and a client playing claude.ai
 npm run db:generate    # after editing src/server/schema.ts
+npm run burrow         # after re-syncing burrow/export/ from the Burrow artifact (burrow/README.md)
 npm run build          # dist/, what apps import
 ```
 
@@ -41,6 +42,15 @@ Shipped as source (Svelte and TypeScript), compiled by the app's Vite; `package.
 - `motion.ts`: Svelte transitions that stand still under reduced motion, `slidingPill`, `haptic`. `Count.svelte`.
 - Everything that moves respects `prefers-reduced-motion: reduce`. Keep it that way.
 
+### Burrow (`burrow/`, `src/burrow/`)
+
+`burrow/README.md` has the re-sync steps.
+
+- `burrow/export/` is the Burrow artifact's export exactly as published (`README.md`, `tokens.json`, `components/bundle.{js,css}`, `components/index.d.ts`). Never edit it; copy it again from the artifact.
+- `burrow/generate.cjs` (no dependencies) writes `src/burrow/generated/`: `tokens.css` (light, dark with the device or `html[data-theme]`), `type.css`, `burrow.css`, `art.js`/`art.d.ts` (the bundle's SVG string generators without its React components) and `scenes.ts` (stash and wreath per count). Never hand-edit those either; `test/burrow.test.ts` fails when they don't match the export. When the export changes shape, fix the generator.
+- `package.json` exports `warren/burrow` (`src/burrow/index.ts`: the art and the components) and `warren/burrow/{tokens,type,burrow}.css`, as source like `warren/web`. `npm run check:web` checks `src/burrow` too.
+- The Svelte components (`Mascot`, `Trace`, `Habitat`, `Peek`, `World`, `Breadcrumbs`, `TunnelRow`, `Loader`) are Warren's ports of Burrow's components, used by both apps or plainly app-neutral, and drawn only with Burrow's own `bh-*` classes (no Tailwind: Cache has none). An app's own components on Burrow (Bao's sunflower ring, Cache's wreath and stash, each app's meter and empty state) stay in the app.
+
 ## Rules that keep the agent cheap and correct
 
 Tests in `test/agent.test.ts` assert these.
@@ -64,6 +74,6 @@ Tests in `test/agent.test.ts` assert these.
 ## Conventions
 
 - Everything an app must not lose lives under `DATA_DIR`; uploaded files are written once and never changed. Backups depend on both.
-- Code moves into Warren only when two apps need it. An app-specific idea stays in the app.
+- Code moves into Warren only when two apps need it. An app-specific idea stays in the app. Burrow is the exception: its export and everything generated from it live here and nowhere else, even what one app alone uses, so a Burrow update is one re-sync here and a pin bump in each app.
 - The repo may be public: no real names, emails or hostnames; use `example.com` and made-up data.
 - Keep README.md and this file current when behaviour changes.

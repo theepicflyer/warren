@@ -1,10 +1,10 @@
 {
   "name": "warren-web-check",
   "private": true,
-  "description": "Type-checks src/web with svelte-check, which needs TypeScript 6 while the server uses 7.",
+  "description": "Type-checks src/web and src/burrow with svelte-check, which needs TypeScript 6 while the server uses 7.",
   "type": "module",
   "scripts": {
-    "check": "svelte-check --workspace ../../src/web --tsconfig ../../tsconfig.web.json --fail-on-warnings"
+    "check": "svelte-check --workspace ../../src --tsconfig ../tsconfig.web.json --fail-on-warnings"
   },
   "devDependencies": {
     "svelte-check": "^4.6.0",

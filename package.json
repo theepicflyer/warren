@@ -18,7 +18,15 @@
       "svelte": "./src/web/index.ts",
       "default": "./src/web/index.ts"
     },
-    "./web/motion.css": "./src/web/motion.css"
+    "./web/motion.css": "./src/web/motion.css",
+    "./burrow": {
+      "types": "./src/burrow/index.ts",
+      "svelte": "./src/burrow/index.ts",
+      "default": "./src/burrow/index.ts"
+    },
+    "./burrow/tokens.css": "./src/burrow/generated/tokens.css",
+    "./burrow/type.css": "./src/burrow/generated/type.css",
+    "./burrow/burrow.css": "./src/burrow/generated/burrow.css"
   },
   "bin": {
     "warren": "dist/server/cli.js"
@@ -26,7 +34,8 @@
   "files": [
     "dist",
     "migrations",
-    "src/web"
+    "src/web",
+    "src/burrow"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -35,7 +44,8 @@
     "test": "vitest run",
     "test:pocketid": "vitest run --config vitest.pocketid.config.ts",
     "db:generate": "drizzle-kit generate",
-    "check:web": "npm --prefix tools/web-check run check"
+    "check:web": "npm --prefix tools/web-check run check",
+    "burrow": "node burrow/generate.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
