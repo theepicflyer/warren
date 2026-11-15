@@ -12,14 +12,21 @@
     "./server": {
       "types": "./dist/server/index.d.ts",
       "default": "./dist/server/index.js"
-    }
+    },
+    "./web": {
+      "types": "./src/web/index.ts",
+      "svelte": "./src/web/index.ts",
+      "default": "./src/web/index.ts"
+    },
+    "./web/motion.css": "./src/web/motion.css"
   },
   "bin": {
     "warren": "dist/server/cli.js"
   },
   "files": [
     "dist",
-    "migrations"
+    "migrations",
+    "src/web"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -27,7 +34,8 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:pocketid": "vitest run --config vitest.pocketid.config.ts",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "check:web": "npm --prefix tools/web-check run check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
@@ -48,8 +56,18 @@
     "@types/web-push": "^3.6.4",
     "drizzle-kit": "^0.31.11",
     "playwright": "^1.63.0",
+    "svelte": "^5.57.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
+  },
+  "svelte": "./src/web/index.ts",
+  "peerDependencies": {
+    "svelte": "^5.29.0"
+  },
+  "peerDependenciesMeta": {
+    "svelte": {
+      "optional": true
+    }
   }
 }

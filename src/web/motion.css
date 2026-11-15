@@ -1,0 +1,202 @@
+/*
+ * Warren's motion: how screens change (pageTransition sets html[data-nav]), what stays put while
+ * they do, and how things respond to a touch. Apps import it once (`import 'warren/web/motion.css'`)
+ * and keep their own look; the timings are custom properties they can override. Everything that
+ * moves sits behind prefers-reduced-motion: no-preference.
+ *
+ * Elements that stay put while the screen changes: give the bottom nav `data-wn-keep="dock"`, the
+ * side rail `data-wn-keep="rail"`, a floating action button `data-wn-keep="fab"` and a header bar
+ * `data-wn-keep="bar"` (one of each per page).
+ */
+
+:root {
+	--wn-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--wn-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--wn-push: 0.36s;
+	--wn-tab: 0.26s;
+	--wn-press-scale: 0.97;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Taps act at once: no double-tap-to-zoom wait on buttons and links. */
+a,
+button,
+[role='button'],
+label,
+summary,
+input,
+select,
+textarea {
+	touch-action: manipulation;
+}
+
+/* Controls aren't text to select when a finger rests on them. */
+button,
+[role='button'],
+[role='tab'],
+summary,
+nav a {
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* The highlight that slides between nav items (slidingPill in motion.ts); apps give it a colour. */
+.wn-pill-blob {
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+}
+
+.has-blob {
+	position: relative;
+}
+
+.has-blob > * {
+	position: relative;
+}
+
+/* Elements that hold still while the screen changes. */
+[data-wn-keep='dock'] {
+	view-transition-name: wn-dock;
+}
+[data-wn-keep='rail'] {
+	view-transition-name: wn-rail;
+}
+[data-wn-keep='fab'] {
+	view-transition-name: wn-fab;
+}
+[data-wn-keep='bar'] {
+	view-transition-name: wn-bar;
+}
+
+::view-transition-old(wn-dock),
+::view-transition-old(wn-rail),
+::view-transition-old(wn-fab),
+::view-transition-old(wn-bar) {
+	display: none;
+}
+
+::view-transition-new(wn-dock),
+::view-transition-new(wn-rail),
+::view-transition-new(wn-fab),
+::view-transition-new(wn-bar) {
+	animation: none;
+}
+
+/* While swiping back, the screen casts a shadow on what's behind it. */
+.wn-swiping {
+	box-shadow: -12px 0 32px rgb(0 0 0 / 0.18);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.wn-pill-blob.is-placed {
+		transition:
+			translate 0.42s var(--wn-spring),
+			width 0.42s var(--wn-spring),
+			height 0.42s var(--wn-spring);
+	}
+
+	/* A pressed button, row or card gives a little under the finger and springs back. */
+	.wn-press {
+		transition: scale 0.32s var(--wn-spring);
+	}
+	.wn-press:active:not(:disabled) {
+		scale: var(--wn-press-scale);
+		transition-duration: 0.08s;
+	}
+
+	/* Between top-level screens: the old fades, the new rises a few pixels into place. */
+	html[data-nav='tab']::view-transition-old(root) {
+		animation: wn-fade-out calc(var(--wn-tab) * 0.45) ease-in both;
+	}
+	html[data-nav='tab']::view-transition-new(root) {
+		animation: wn-rise-in var(--wn-tab) var(--wn-ease) both;
+	}
+
+	/* Deeper: the new screen slides in from the right over the old, which shifts left and dims. */
+	html[data-nav='forward']::view-transition-old(root) {
+		animation: wn-shift-left var(--wn-push) var(--wn-ease) both;
+	}
+	html[data-nav='forward']::view-transition-new(root) {
+		animation: wn-in-from-right var(--wn-push) var(--wn-ease) both;
+	}
+
+	/* Back: the reverse. The old screen goes on top so it can slide away to the right. */
+	html[data-nav='back']::view-transition-old(root) {
+		z-index: 1;
+		animation: wn-out-to-right var(--wn-push) var(--wn-ease) both;
+	}
+	html[data-nav='back']::view-transition-new(root) {
+		animation: wn-shift-from-left var(--wn-push) var(--wn-ease) both;
+	}
+
+	/* Wide screens: the content area is no phone screen; a short slide and fade reads better. */
+	@media (min-width: 1024px) {
+		html[data-nav='forward']::view-transition-old(root),
+		html[data-nav='back']::view-transition-old(root) {
+			animation: wn-fade-out 0.14s ease-in both;
+		}
+		html[data-nav='forward']::view-transition-new(root) {
+			animation: wn-nudge-from-right 0.3s var(--wn-ease) both;
+		}
+		html[data-nav='back']::view-transition-new(root) {
+			animation: wn-nudge-from-left 0.3s var(--wn-ease) both;
+		}
+	}
+
+	.wn-skeleton {
+		animation: wn-pulse 1.6s ease-in-out infinite;
+	}
+}
+
+@keyframes wn-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+@keyframes wn-rise-in {
+	from {
+		opacity: 0;
+		translate: 0 10px;
+	}
+}
+@keyframes wn-in-from-right {
+	from {
+		translate: 100% 0;
+	}
+}
+@keyframes wn-out-to-right {
+	to {
+		translate: 100% 0;
+	}
+}
+@keyframes wn-shift-left {
+	to {
+		translate: -28% 0;
+		filter: brightness(0.82);
+	}
+}
+@keyframes wn-shift-from-left {
+	from {
+		translate: -28% 0;
+		filter: brightness(0.82);
+	}
+}
+@keyframes wn-nudge-from-right {
+	from {
+		opacity: 0;
+		translate: 24px 0;
+	}
+}
+@keyframes wn-nudge-from-left {
+	from {
+		opacity: 0;
+		translate: -24px 0;
+	}
+}
+@keyframes wn-pulse {
+	50% {
+		opacity: 0.55;
+	}
+}

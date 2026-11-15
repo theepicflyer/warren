@@ -27,7 +27,18 @@ Warren provides everything around the domain layer, so an app is its tables, its
 | Files | Uploaded photos: turned upright, shrunk to what Claude can use, written once and never changed. |
 | Web Push | Device subscriptions and sending, limited to the browsers' own push services. What to send and when is the app's job. |
 
-The web package (app shell, navigation, the agent sheet, Burrow's components) is not here yet.
+`warren/web`, for the apps' SvelteKit clients (Svelte 5). Behaviour only; how things look stays with Burrow and the app:
+
+| Part | What it does |
+| --- | --- |
+| API client (`get`, `post`, ..., `ApiError`) | Same-origin requests with Warren's CSRF header; form errors come back per field; a 401 calls the app's `onUnauthorized`. |
+| `Session`, `Toasts`, `changes` | Who is signed in, toasts with an optional action (Undo), and "the data changed" so screens reload. |
+| `loaded` | A screen's data by address, cached: a screen opened before shows its last data at once and refreshes underneath, so going back is instant. |
+| `pageTransition` | Screen changes like a native app's: deeper screens slide in from the right, back slides them away, the nav's own screens cross-fade, the nav stays put. View Transitions API; `motion.css` holds the animations. |
+| `dragToDismiss`, `swipeBack` | Pull a sheet down to close it; swipe in from the left edge to go back (for iPhone home-screen apps, which have no back gesture). |
+| Motion (`fade`, `fly`, `rise`, `row`, `sheet`, `flip`, `slidingPill`, `Count`, `haptic`) | Transitions that stand still under reduced motion, a nav highlight that slides between items, numbers that count, and a short buzz on Android. |
+
+The app's web client depends on Warren too, at the same commit as its server, with `ignore-scripts=true` in `web/.npmrc` so npm doesn't build Warren's server half there. It imports source: `import { get, loaded } from 'warren/web'` and `import 'warren/web/motion.css'`.
 
 ## An app
 

@@ -4,14 +4,15 @@ Guidance for working in this repository.
 
 ## Project
 
-Warren is the framework under the household's apps (Bao, Cache): TypeScript end to end, one container, one Node process, one SQLite file, one origin. `src/server/` is the server package (`warren/server`). The web package is still to come. Burrow is the design system and is separate: Warren never decides how things look.
+Warren is the framework under the household's apps (Bao, Cache): TypeScript end to end, one container, one Node process, one SQLite file, one origin. `src/server/` is the server package (`warren/server`); `src/web/` is the web package (`warren/web`), for the apps' SvelteKit clients. Burrow is the design system and is separate: Warren decides how things behave and move, never how they look (colours, type, components).
 
 Apps install Warren from this repository at a tag. A change here reaches production only when an app bumps its pin and releases.
 
 ## Commands
 
 ```bash
-npm run check          # tsc
+npm run check          # tsc (server and tests)
+npm run check:web      # svelte-check of src/web (tools/web-check pins TypeScript 6, which svelte-check needs)
 npm test               # unit tests: no network, scripted Claude (test/helpers.ts)
 npm run test:pocketid  # needs Docker: real Pocket ID, a browser, and a client playing claude.ai
 npm run db:generate    # after editing src/server/schema.ts
@@ -29,6 +30,16 @@ npm run build          # dist/, what apps import
 - `push.ts`: Web Push. Warren keeps subscriptions and sends (`deliver` drops devices that are gone); the app decides what and when, in a job. Endpoints are limited to `PUSH_HOSTS`.
 - `files.ts`: uploads. `saveImage` normalises a photo with sharp before it is stored.
 - `scheduler.ts`, `backup.ts`, `secrets.ts`, `time.ts`: small and self-explanatory.
+
+### The web package (`src/web/`)
+
+Shipped as source (Svelte and TypeScript), compiled by the app's Vite; `package.json` exports it as `warren/web` and `warren/web/motion.css`. It imports only `svelte`, never `$app/*`: the app passes in what needs SvelteKit (`configureApi({ onUnauthorized: () => goto('/login') })`, `onNavigate((n) => pageTransition(n, { tabs }))`), so it type-checks on its own.
+
+- `api.ts`, `state.svelte.ts` (`Session`, `Toasts`, `changes`), `data.svelte.ts` (`loaded` and its cache).
+- `navigation.ts`: `direction()` decides forward, back or tab (tested in `test/web.test.ts`); `pageTransition` sets `html[data-nav]` and runs a view transition. `motion.css` animates on that attribute and keeps elements marked `data-wn-keep` still.
+- `gestures.ts`: `dragToDismiss` (pointer events on a handle) and `swipeBack` (touch events, because Safari cancels pointer events when it might scroll).
+- `motion.ts`: Svelte transitions that stand still under reduced motion, `slidingPill`, `haptic`. `Count.svelte`.
+- Everything that moves respects `prefers-reduced-motion: reduce`. Keep it that way.
 
 ## Rules that keep the agent cheap and correct
 

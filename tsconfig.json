@@ -7,8 +7,18 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": false,
     "skipLibCheck": true,
-    "types": ["node"],
-    "noEmit": true
+    "types": [
+      "node"
+    ],
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["src", "test", "*.ts"]
+  "include": [
+    "src",
+    "test",
+    "*.ts"
+  ],
+  "exclude": [
+    "src/web"
+  ]
 }
