@@ -33,7 +33,8 @@ export type Tab = string | ((path: string) => boolean);
 export function direction(navigation: NavigationLike, tabs: readonly Tab[] = []): Direction | null {
 	const { from, to } = navigation;
 	if (!from || !to || navigation.willUnload) return null;
-	if (from.route.id === to.route.id && from.url.pathname === to.url.pathname) return null;
+	if (from.route.id !== null && from.route.id === to.route.id) return null;
+	if (from.url.pathname === to.url.pathname) return null;
 	const isTab = (path: string) => {
 		const clean = path.replace(/\/+$/, '') || '/';
 		return tabs.some((tab) => (typeof tab === 'string' ? tab === clean : tab(clean)));
@@ -44,7 +45,7 @@ export function direction(navigation: NavigationLike, tabs: readonly Tab[] = [])
 	const b = depth(to.url.pathname);
 	if (b > a) return 'forward';
 	if (b < a) return 'back';
-	return from.route.id === to.route.id ? null : 'tab';
+	return 'tab';
 }
 
 let skipNext = false;
@@ -55,28 +56,48 @@ export function skipNextTransition(): void {
 }
 
 /**
+ * How the screen on show was reached, for its whole life: `html[data-wn-arrived]` is `forward`,
+ * `back`, `tab` or `same` (the same screen with other data, or no transition) from the moment the
+ * navigation starts until the next one. Screens reached by going back should stand as they were:
+ * turn their entrance animations off under `html[data-wn-arrived='back']`. (Unlike `data-nav`,
+ * which goes when the transition ends, this one doesn't change while the screen is up, so turning
+ * an animation off by it never restarts the animation.)
+ */
+export function arrivedBy(): Direction | 'same' | null {
+	if (typeof document === 'undefined') return null;
+	return (document.documentElement.dataset.wnArrived as Direction | 'same' | undefined) ?? null;
+}
+
+/**
  * Run a navigation inside a view transition; return this from SvelteKit's `onNavigate`. Options:
  * `tabs` (see `direction`), and `same: true` to cross-fade the same screen with other data too.
+ * It also sets `html[data-wn-arrived]` (see `arrivedBy`), with or without a transition.
  */
 export function pageTransition(navigation: NavigationLike, options: { tabs?: readonly Tab[]; same?: boolean } = {}): Promise<void> | void {
+	if (typeof document === 'undefined' || !navigation.to || navigation.willUnload) return;
+	const root = document.documentElement;
+	const dir = direction(navigation, options.tabs) ?? (options.same ? 'tab' : null);
+	root.dataset.wnArrived = dir ?? 'same';
 	if (skipNext) {
 		skipNext = false;
 		return;
 	}
-	if (typeof document === 'undefined' || !document.startViewTransition) return;
-	if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-	const dir = direction(navigation, options.tabs) ?? (options.same && navigation.to && !navigation.willUnload ? 'tab' : null);
-	if (!dir) return;
+	if (!dir || !document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-	const root = document.documentElement;
 	root.dataset.nav = dir;
 	return new Promise((resolve) => {
 		const transition = document.startViewTransition(async () => {
 			resolve();
-			await navigation.complete;
+			// an interrupted navigation (a redirect, another tap) rejects; the next one takes over
+			await navigation.complete.catch(() => {});
 		});
-		transition.finished.finally(() => {
-			if (root.dataset.nav === dir) delete root.dataset.nav;
-		});
+		// a transition skipped because another started rejects these; nothing is wrong
+		transition.ready.catch(() => {});
+		transition.updateCallbackDone.catch(() => {});
+		transition.finished
+			.catch(() => {})
+			.finally(() => {
+				if (root.dataset.nav === dir) delete root.dataset.nav;
+			});
 	});
 }

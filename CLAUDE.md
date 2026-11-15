@@ -36,7 +36,7 @@ npm run build          # dist/, what apps import
 Shipped as source (Svelte and TypeScript), compiled by the app's Vite; `package.json` exports it as `warren/web` and `warren/web/motion.css`. It imports only `svelte`, never `$app/*`: the app passes in what needs SvelteKit (`configureApi({ onUnauthorized: () => goto('/login') })`, `onNavigate((n) => pageTransition(n, { tabs }))`), so it type-checks on its own.
 
 - `api.ts`, `state.svelte.ts` (`Session`, `Toasts`, `changes`), `data.svelte.ts` (`loaded` and its cache).
-- `navigation.ts`: `direction()` decides forward, back or tab (tested in `test/web.test.ts`); `pageTransition` sets `html[data-nav]` and runs a view transition. `motion.css` animates on that attribute and keeps elements marked `data-wn-keep` still.
+- `navigation.ts`: `direction()` decides forward, back or tab (tested in `test/web.test.ts`); `pageTransition` sets `html[data-nav]` for the transition and `html[data-wn-arrived]` for the life of the screen (`arrivedBy()`), and runs a view transition. `motion.css` animates on that attribute and keeps elements marked `data-wn-keep` still.
 - `gestures.ts`: `dragToDismiss` (pointer events on a handle) and `swipeBack` (touch events, because Safari cancels pointer events when it might scroll).
 - `motion.ts`: Svelte transitions that stand still under reduced motion, `slidingPill`, `haptic`. `Count.svelte`.
 - Everything that moves respects `prefers-reduced-motion: reduce`. Keep it that way.

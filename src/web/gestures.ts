@@ -20,6 +20,7 @@ export function dragToDismiss(options: { onDismiss: () => void; handle?: string 
 		const handle = options.handle ?? '[data-drag-handle]';
 		let start: { y: number; t: number; id: number } | null = null;
 		let last = { y: 0, t: 0 };
+		let prev = { y: 0, t: 0 };
 
 		const set = (dy: number) => {
 			panel.style.translate = dy ? `0 ${dy}px` : '';
@@ -29,7 +30,7 @@ export function dragToDismiss(options: { onDismiss: () => void; handle?: string 
 		const down = (e: PointerEvent) => {
 			if (e.button !== 0 || !(e.target as Element).closest(handle)) return;
 			start = { y: e.clientY, t: e.timeStamp, id: e.pointerId };
-			last = { y: e.clientY, t: e.timeStamp };
+			last = prev = { y: e.clientY, t: e.timeStamp };
 			panel.setPointerCapture(e.pointerId);
 			panel.style.transition = 'none';
 		};
@@ -38,12 +39,14 @@ export function dragToDismiss(options: { onDismiss: () => void; handle?: string 
 			const dy = e.clientY - start.y;
 			// upwards it resists, as a sheet that is already fully open does
 			set(dy > 0 ? dy : -Math.sqrt(-dy) * 2);
+			prev = last;
 			last = { y: e.clientY, t: e.timeStamp };
 		};
 		const up = (e: PointerEvent) => {
 			if (!start || e.pointerId !== start.id) return;
 			const dy = e.clientY - start.y;
-			const speed = (e.clientY - last.y) / Math.max(1, e.timeStamp - last.t);
+			// the up event lands where the last move was, so the speed comes from the last two moves
+			const speed = (last.y - prev.y) / Math.max(1, last.t - prev.t);
 			start = null;
 			if (dy > Math.min(140, panel.offsetHeight * 0.3) || (dy > 24 && speed > 0.5)) {
 				panel.style.transition = '';

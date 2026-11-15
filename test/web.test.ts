@@ -26,6 +26,8 @@ test("a tab can be a test, for top-level screens with a date or id in the addres
   const dayTabs = [(p: string) => p.startsWith("/day/"), "/foods"];
   expect(direction(nav("/day/2026-11-15", "/foods", {}, ["/day/[date]", "/foods"]), dayTabs)).toBe("tab");
   expect(direction(nav("/foods", "/foods/12", {}, ["/foods", "/foods/[id]"]), dayTabs)).toBe("forward");
+  // one day to another is the same screen with other data, even though both are the tab
+  expect(direction(nav("/day/2026-11-14", "/day/2026-11-15", {}, ["/day/[date]", "/day/[date]"]), dayTabs)).toBeNull();
 });
 
 test("the back and forward buttons decide outside the tabs", () => {

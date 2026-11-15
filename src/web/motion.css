@@ -52,7 +52,7 @@ nav a {
 	position: relative;
 }
 
-.has-blob > * {
+.has-blob > :not(.wn-pill-blob) {
 	position: relative;
 }
 

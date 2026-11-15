@@ -38,7 +38,9 @@ Warren provides everything around the domain layer, so an app is its tables, its
 | `dragToDismiss`, `swipeBack` | Pull a sheet down to close it; swipe in from the left edge to go back (for iPhone home-screen apps, which have no back gesture). |
 | Motion (`fade`, `fly`, `rise`, `row`, `sheet`, `flip`, `slidingPill`, `Count`, `haptic`) | Transitions that stand still under reduced motion, a nav highlight that slides between items, numbers that count, and a short buzz on Android. |
 
-The app's web client depends on Warren too, at the same commit as its server, with `ignore-scripts=true` in `web/.npmrc` so npm doesn't build Warren's server half there. It imports source: `import { get, loaded } from 'warren/web'` and `import 'warren/web/motion.css'`.
+The app's web client depends on Warren too, at the same commit as its server, with `ignore-scripts=true` in `web/.npmrc` so npm doesn't build Warren's server half there. It imports source: `import { get, loaded } from 'warren/web'` and `import 'warren/web/motion.css'`. Because it is source, keep it out of Vite's dev pre-bundling: `optimizeDeps: { exclude: ['warren'] }` in `vite.config.ts` (the production build doesn't need it).
+
+Screens reached by going back should stand as they were left: `pageTransition` sets `html[data-wn-arrived]` (`forward`, `back`, `tab` or `same`) for the life of each screen, so an app turns its entrance animations off under `html[data-wn-arrived='back']`, and `Count` starts at its value there.
 
 ## An app
 
