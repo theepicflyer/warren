@@ -61,7 +61,9 @@ export function skipNextTransition(): void {
  * navigation starts until the next one. Screens reached by going back should stand as they were:
  * turn their entrance animations off under `html[data-wn-arrived='back']`. (Unlike `data-nav`,
  * which goes when the transition ends, this one doesn't change while the screen is up, so turning
- * an animation off by it never restarts the animation.)
+ * an animation off by it never restarts the animation.) It still changes on the next navigation
+ * before the old screen is captured, and becomes `same` on another month or filter; an app that
+ * needs neither should read `arrivedBy()` as a screen mounts and keep the answer for its life.
  */
 export function arrivedBy(): Direction | 'same' | null {
 	if (typeof document === 'undefined') return null;

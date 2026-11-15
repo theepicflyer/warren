@@ -77,6 +77,9 @@ export function dragToDismiss(options: { onDismiss: () => void; handle?: string 
  * takes its place. `canGoBack` says whether there is anywhere to go (not on a top-level screen, say);
  * `back` goes there (default `history.back()`). Touch events rather than pointer events, because
  * Safari cancels pointer events as soon as it thinks the page might scroll.
+ *
+ * Give an ancestor of the element `overflow-x: clip`: dragged past the right edge, the screen
+ * otherwise widens mobile Chrome's layout viewport and fixed bars (the nav) slide off mid-swipe.
  */
 export function swipeBack(options: { canGoBack: () => boolean; back?: () => void; edge?: number }) {
 	return (screen: HTMLElement) => {

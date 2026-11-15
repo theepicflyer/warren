@@ -34,7 +34,10 @@ export function row(node: Element, params: { duration?: number } = {}): t.Transi
 	};
 }
 
-/** A sheet rising from the bottom edge and springing as it lands; it drops away faster than it came. */
+/**
+ * A sheet rising from the bottom edge and springing as it lands; it drops away faster than it came.
+ * Use it as `in:sheet out:sheet`: with `transition:sheet` Svelte reverses the entrance to close it.
+ */
 export function sheet(node: Element, _params: unknown, { direction }: { direction: 'in' | 'out' | 'both' }): t.TransitionConfig {
 	if (prefersReducedMotion.current) return still;
 	return direction === 'out'
