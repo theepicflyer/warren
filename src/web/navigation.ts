@@ -21,18 +21,23 @@ export type Direction = 'forward' | 'back' | 'tab';
 
 const depth = (path: string) => path.split('/').filter(Boolean).length;
 
+/** A top-level screen of the nav: an exact address, or a test for addresses (`(p) => p.startsWith('/day/')`). */
+export type Tab = string | ((path: string) => boolean);
+
 /**
- * Which way a navigation goes. `tabs` are the nav's top-level screens (`'/'` matches only itself;
- * any other entry matches itself and nothing deeper). Between two of them it is `tab` whichever way
+ * Which way a navigation goes. `tabs` are the nav's top-level screens. Between two of them it is `tab` whichever way
  * history went; otherwise the browser's back and forward buttons decide, and for a link, a deeper
  * address is `forward` and a shallower one `back`. Null means no transition: the same screen with
  * other data (another month, a filter), or nowhere to go.
  */
-export function direction(navigation: NavigationLike, tabs: readonly string[] = []): Direction | null {
+export function direction(navigation: NavigationLike, tabs: readonly Tab[] = []): Direction | null {
 	const { from, to } = navigation;
 	if (!from || !to || navigation.willUnload) return null;
 	if (from.route.id === to.route.id && from.url.pathname === to.url.pathname) return null;
-	const isTab = (path: string) => tabs.includes(path.replace(/\/+$/, '') || '/');
+	const isTab = (path: string) => {
+		const clean = path.replace(/\/+$/, '') || '/';
+		return tabs.some((tab) => (typeof tab === 'string' ? tab === clean : tab(clean)));
+	};
 	if (isTab(from.url.pathname) && isTab(to.url.pathname)) return 'tab';
 	if (navigation.type === 'popstate') return (navigation.delta ?? -1) < 0 ? 'back' : 'forward';
 	const a = depth(from.url.pathname);
@@ -53,7 +58,7 @@ export function skipNextTransition(): void {
  * Run a navigation inside a view transition; return this from SvelteKit's `onNavigate`. Options:
  * `tabs` (see `direction`), and `same: true` to cross-fade the same screen with other data too.
  */
-export function pageTransition(navigation: NavigationLike, options: { tabs?: readonly string[]; same?: boolean } = {}): Promise<void> | void {
+export function pageTransition(navigation: NavigationLike, options: { tabs?: readonly Tab[]; same?: boolean } = {}): Promise<void> | void {
 	if (skipNext) {
 		skipNext = false;
 		return;

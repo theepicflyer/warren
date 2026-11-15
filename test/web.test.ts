@@ -22,6 +22,12 @@ test("screens deeper are forward, shallower back, and the nav's own screens cros
   expect(direction(nav("/", "/settings/budgets"), tabs)).toBe("forward");
 });
 
+test("a tab can be a test, for top-level screens with a date or id in the address", () => {
+  const dayTabs = [(p: string) => p.startsWith("/day/"), "/foods"];
+  expect(direction(nav("/day/2026-11-15", "/foods", {}, ["/day/[date]", "/foods"]), dayTabs)).toBe("tab");
+  expect(direction(nav("/foods", "/foods/12", {}, ["/foods", "/foods/[id]"]), dayTabs)).toBe("forward");
+});
+
 test("the back and forward buttons decide outside the tabs", () => {
   expect(direction(nav("/foods/1", "/settings/budgets", { type: "popstate", delta: -1 }), tabs)).toBe("back");
   expect(direction(nav("/settings/budgets", "/foods/1", { type: "popstate", delta: 1 }), tabs)).toBe("forward");
