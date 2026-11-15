@@ -4,7 +4,7 @@
  * opens; screens themselves change with `pageTransition` (navigation.ts) and motion.css.
  */
 import { flip as baseFlip, type AnimationConfig, type FlipParams } from 'svelte/animate';
-import { backOut, cubicIn, cubicOut } from 'svelte/easing';
+import { backOut, cubicOut, quintOut } from 'svelte/easing';
 import { prefersReducedMotion } from 'svelte/motion';
 import * as t from 'svelte/transition';
 
@@ -35,14 +35,16 @@ export function row(node: Element, params: { duration?: number } = {}): t.Transi
 }
 
 /**
- * A sheet rising from the bottom edge and springing as it lands; it drops away faster than it came.
- * Use it as `in:sheet out:sheet`: with `transition:sheet` Svelte reverses the entrance to close it.
+ * A sheet sliding up from the bottom edge, its whole height, and back down again as a phone's
+ * sheets do. It slides rather than fades, so a sheet pulled partway down (`dragToDismiss`) carries
+ * on down from where the finger left it. Use it as `in:sheet out:sheet`: with `transition:sheet`
+ * Svelte plays the entrance backwards to close it.
  */
 export function sheet(node: Element, _params: unknown, { direction }: { direction: 'in' | 'out' | 'both' }): t.TransitionConfig {
 	if (prefersReducedMotion.current) return still;
-	return direction === 'out'
-		? t.fly(node, { y: 96, duration: 200, easing: cubicIn, opacity: 1 })
-		: t.fly(node, { y: 96, duration: 420, easing: spring, opacity: 0.4 });
+	// the last stretch fades too, for a sheet centred as a dialog on a wide screen that never leaves it
+	const css = (u: number) => `transform: translateY(${(1 - u) * 100}%); opacity: ${Math.min(1, u * 3)}`;
+	return direction === 'out' ? { duration: 300, easing: cubicOut, css } : { duration: 440, easing: quintOut, css };
 }
 
 /** Rows that move when the list changes order or gains and loses rows (`animate:flip`). */
