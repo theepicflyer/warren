@@ -139,7 +139,7 @@ const form = (fields: Record<string, string>) => ({
 });
 
 /** What claude.ai does when a connector is added, up to holding a code. */
-async function connect() {
+async function connect(scope?: string) {
   const refused = await rpc(null, "tools/list", {});
   expect(refused.status).toBe(401);
   const metadataUrl = /resource_metadata="([^"]+)"/.exec(refused.header)?.[1];
@@ -169,6 +169,8 @@ async function connect() {
     code_challenge_method: "S256", state,
     // claude.ai sends this and requests no scope
     resource: `${base}/mcp`,
+    // Meta's Muse asks for its own scopes instead
+    ...(scope ? { scope } : {}),
   })) authorize.searchParams.set(k, v);
 
   const tab = await page.newPage();
@@ -239,6 +241,22 @@ test("the same MCP token now acts as that person", async () => {
   expect(out.body.result.content).toEqual([{ type: "text", text: "No notes" }]);
   const forged = await rpc(`${tokens.access_token.slice(0, -4)}AAAA`, "tools/list", {});
   expect(forged.status).toBe(401);
+});
+
+test("a client that asks for its own scopes still acts as the person", async () => {
+  const scoped = await connect("mcp:read mcp:write");
+  const own = await exchange(scoped);
+  expect(own.access_token).toBeTruthy();
+  const out = await rpc(own.access_token, "tools/call", { name: "list_notes", arguments: { day: "2026-03-03" } });
+  expect(out.body.result.content).toEqual([{ type: "text", text: "No notes" }]);
+
+  const renewed = (await fetch(
+    scoped.meta.token_endpoint,
+    form({ grant_type: "refresh_token", refresh_token: own.refresh_token, client_id: scoped.clientId, scope: "mcp:read" }),
+  ).then((r) => r.json())) as any;
+  expect(renewed.access_token).toBeTruthy();
+  const again = await rpc(renewed.access_token, "tools/call", { name: "list_notes", arguments: { day: "2026-03-03" } });
+  expect(again.body.result.content).toEqual([{ type: "text", text: "No notes" }]);
 });
 
 test("tokens refresh, and survive a restart of the app", async () => {

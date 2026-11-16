@@ -9,12 +9,14 @@
  * Things that break this, all covered by test/pocketid:
  * - Never require scopes: claude.ai requests none.
  * - Never forward the `resource` parameter claude.ai sends: Pocket ID rejects it.
+ * - Never forward a client's own scopes. Pocket ID returns an ID token, and with it the person's
+ *   `sub`, only for `openid`; a client asking for `mcp:read` would sign in as nobody.
  * - The proxy's store (DATA_DIR/mcp) and signing keys must survive restarts, or connectors show
  *   as connected with no tools.
  */
 import path from "node:path";
 import { FastMCP, OAuthProvider, UserError } from "fastmcp";
-import { DiskStore } from "fastmcp/auth";
+import { DiskStore, type OAuthProxy } from "fastmcp/auth";
 import { noChanges } from "./changes.js";
 import type { Config } from "./config.js";
 import type { Db } from "./db.js";
@@ -64,13 +66,28 @@ function subOf(session: Session | undefined): string | undefined {
   return undefined;
 }
 
+/**
+ * fastmcp uses `scopes` only when the client asks for none; a client's own scope goes upstream
+ * as is, on sign-in and on refresh. Drop it, so Pocket ID always gets the pinned scopes.
+ */
+class PinnedScopeProvider extends OAuthProvider {
+  protected override createProxy(): OAuthProxy {
+    const proxy = super.createProxy();
+    const authorize = proxy.authorize.bind(proxy);
+    const refresh = proxy.exchangeRefreshToken.bind(proxy);
+    proxy.authorize = ({ scope: _, ...params }, request) => authorize(params, request);
+    proxy.exchangeRefreshToken = ({ scope: _, ...request }) => refresh(request);
+    return proxy;
+  }
+}
+
 export async function createMcp(deps: McpDeps): Promise<FastMCP<Session>> {
   const { db, config } = deps;
   let options: Record<string, unknown>;
   if (config.oidc) {
     const endpoints = await providerEndpoints(config.oidc.issuer);
     options = {
-      auth: new OAuthProvider({
+      auth: new PinnedScopeProvider({
         authorizationEndpoint: endpoints.authorization,
         tokenEndpoint: endpoints.token,
         baseUrl: config.publicUrl,
