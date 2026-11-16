@@ -66,6 +66,7 @@ Tests in `test/agent.test.ts` assert these.
 `test/pocketid` covers all of these against a real Pocket ID.
 
 - Never require scopes on the proxy: claude.ai requests none.
+- Never forward a client's own scopes (Meta's Muse asks for `mcp:read mcp:write`): without `openid` Pocket ID returns no ID token, so the person can't be found. `PinnedScopeProvider` in `mcp.ts` drops them on sign-in and refresh.
 - Never forward the `resource` parameter claude.ai sends: Pocket ID rejects it.
 - The proxy's store (`DATA_DIR/mcp`) and the keys derived from `DATA_DIR/secret` must survive restarts, or connectors show as connected with no tools.
 - One Pocket ID client serves both flows; it needs both callback URLs (`/auth/web/callback` and `/oauth/callback`).
