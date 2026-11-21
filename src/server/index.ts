@@ -31,6 +31,7 @@ export { type LocalTime, localTime } from "./time.js";
 export {
   defineTool,
   DomainError,
+  ImageResult,
   runTool,
   type Tool,
   type ToolContext,
@@ -38,6 +39,7 @@ export {
   type ToolResult,
   toolSchemas,
   toolsFor,
+  withImages,
 } from "./tools.js";
 export { devUser, upsertUser, userById, userBySub } from "./users.js";
 export {

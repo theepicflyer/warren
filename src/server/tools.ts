@@ -2,10 +2,11 @@
  * Tools: the operations an app offers to Claude, defined once. The in-app agent and the MCP
  * server both run them through `runTool`, so validation, transactions and errors behave the same.
  */
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import type { ChangeLog } from "./changes.js";
 import type { Db } from "./db.js";
-import type { User } from "./schema.js";
+import { files, type User } from "./schema.js";
 
 /** Something the person (or the model) can fix: bad input, a rule broken. Its message is shown. */
 export class DomainError extends Error {
@@ -28,7 +29,23 @@ export interface ToolContext {
   fileIds: number[];
 }
 
-export type ToolResult = string | Record<string, unknown> | unknown[];
+/**
+ * A result that shows the agent stored photos: its text, then each photo after its label. The
+ * runner stores the photos as file references, like the ones sent with a message. MCP clients get
+ * only the text.
+ */
+export class ImageResult {
+  constructor(
+    readonly text: string,
+    readonly images: readonly { fileId: number; label: string }[],
+  ) {}
+}
+
+export function withImages(text: string, images: readonly { fileId: number; label: string }[]): ImageResult {
+  return new ImageResult(text, images);
+}
+
+export type ToolResult = string | Record<string, unknown> | unknown[] | ImageResult;
 
 export interface Tool<Schema extends z.ZodType = z.ZodType> {
   name: string;
@@ -75,12 +92,15 @@ export function toolSchemas(tools: readonly Tool[]): ToolSchema[] {
 }
 
 export function resultText(result: ToolResult): string {
+  if (result instanceof ImageResult) return result.text;
   return typeof result === "string" ? result : JSON.stringify(result);
 }
 
 export interface ToolOutcome {
   text: string;
   isError: boolean;
+  /** Photos to show the agent after the text. */
+  images?: { fileId: number; label: string }[];
 }
 
 /**
@@ -104,7 +124,17 @@ export function runTool(
   }
   try {
     const result = ctx.db.transaction((tx) => tool.run({ ...ctx, db: tx as Db }, parsed.data));
-    return { text: resultText(result), isError: false };
+    const images = result instanceof ImageResult ? [...result.images] : [];
+    if (images.length) {
+      const ids = [...new Set(images.map((i) => i.fileId))];
+      const owned = ctx.db
+        .select({ id: files.id })
+        .from(files)
+        .where(and(inArray(files.id, ids), eq(files.userId, ctx.user.id)))
+        .all();
+      if (owned.length !== ids.length) throw new Error(`tool ${name} returned a file that isn't this user's`);
+    }
+    return { text: resultText(result), isError: false, ...(images.length ? { images } : {}) };
   } catch (err) {
     if (err instanceof DomainError) return { text: `Error: ${err.message}`, isError: true };
     throw err;
