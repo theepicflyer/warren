@@ -7,6 +7,7 @@
 	--space-4: 16px;
 	--space-6: 24px;
 	--space-8: 32px;
+	--radius-slot: 7px;
 	--radius-sm: 10px;
 	--radius-md: 16px;
 	--radius-lg: 24px;
@@ -19,9 +20,13 @@
 	--bubblegum: #ff8fb3;
 	--accent: var(--tomato);
 	--accent-soft: var(--tomato-soft);
+	--energy: var(--tomato);
 	--protein: var(--sky);
 	--carbs: var(--sunny);
 	--fat: var(--mint);
+	--protein-soft: var(--sky-soft);
+	--carbs-soft: var(--sunny-soft);
+	--fat-soft: var(--mint-soft);
 	--bark: #8a5a3b;
 	--fur-hamster: #eea955;
 	--fur-squirrel: #c8693a;
@@ -34,6 +39,7 @@
 	--paper: #fff7ea;
 	--surface: #ffffff;
 	--surface-sunk: #f7ebd8;
+	--surface-tray: #fcf4e8;
 	--line: #e6d6be;
 	--ink: #2b2240;
 	--ink-muted: #665a7a;
@@ -55,6 +61,7 @@
 	--water: #9ed6f5;
 	--shadow-sticker: 0 3px 0 #2b2240;
 	--shadow-lift: 0 8px 24px rgba(43, 34, 64, 0.10);
+	--shadow-slot: inset 0 1.5px 2px rgba(43, 34, 64, .16), inset 0 -1px 0 rgba(255, 255, 255, .7);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -63,6 +70,7 @@
 		--paper: #1d1828;
 		--surface: #2a2339;
 		--surface-sunk: #15111e;
+		--surface-tray: #241e32;
 		--line: #3b3350;
 		--ink: #fff3e2;
 		--ink-muted: #bdb2cf;
@@ -84,6 +92,7 @@
 		--water: #2b5a78;
 		--shadow-sticker: 0 3px 0 #0e0b14;
 		--shadow-lift: 0 8px 24px rgba(0, 0, 0, 0.40);
+		--shadow-slot: inset 0 1.5px 2px rgba(0, 0, 0, .45), inset 0 -1px 0 rgba(255, 255, 255, .06);
 	}
 }
 
@@ -92,6 +101,7 @@
 	--paper: #1d1828;
 	--surface: #2a2339;
 	--surface-sunk: #15111e;
+	--surface-tray: #241e32;
 	--line: #3b3350;
 	--ink: #fff3e2;
 	--ink-muted: #bdb2cf;
@@ -113,4 +123,5 @@
 	--water: #2b5a78;
 	--shadow-sticker: 0 3px 0 #0e0b14;
 	--shadow-lift: 0 8px 24px rgba(0, 0, 0, 0.40);
+	--shadow-slot: inset 0 1.5px 2px rgba(0, 0, 0, .45), inset 0 -1px 0 rgba(255, 255, 255, .06);
 }

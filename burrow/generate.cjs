@@ -172,6 +172,7 @@ export type TraceName = ${union(Object.keys(A.TRACES))};
 export type TrailKind = ${union(Object.keys(A.TRAIL))};
 export type HabitatKind = ${union(Object.keys(A.HAB))};
 export type IconName = ${union(Object.keys(A.ICONS))};
+export type NutrientKind = ${union(Object.keys(A.NUT_ART))};
 
 export interface TrailOptions {
 	kind: TrailKind;
@@ -212,6 +213,7 @@ export const TRAIL: Record<TrailKind, { spacing: number; draw: (p: TrailPoint, i
 export const HAB: Record<HabitatKind, Habitat>;
 export const ICONS: Record<IconName, string>;
 export const STEP_MARK: Record<TrailKind, TraceName>;
+export const NUT_NAME: Record<NutrientKind, string>;
 
 /** One animal in a mood, as an SVG string (120 × 120 view box). */
 export function mascotSVG(character: Character, mood?: Mood, label?: string): string;
@@ -233,6 +235,8 @@ export function cloud(x: number, y: number, s: number): string;
 export function tr(name: TraceName, x: number, y: number, s?: number, rot?: number): string;
 /** "Wed 22 Oct", with the year when it isn't now's. */
 export function formatDay(date: Date, now?: Date): string;
+/** A nutrient's symbol (flame, drumstick, wheat, drop) as an SVG string; labelled names it for screen readers. */
+export function nutrientSVG(kind: NutrientKind, size?: number, labelled?: boolean): string;
 `);
 
 /* ---------- scenes.ts: render the bundle's Stash and Ring with a tiny string renderer for React ---------- */

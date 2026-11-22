@@ -29,15 +29,26 @@ export interface BackdropProps { pattern?: 'seeds' | 'leaves' | 'soil' | 'ripple
 /** cap: an animal (drawn running at the progress point) or a trace name. */
 export interface RingProps { value: number; max: number; variant?: 'sunflower' | 'wreath'; cap?: Character | TraceName; capMood?: Mood; capSize?: number; size?: number; color?: string; children?: ReactNode; }
 /** Over max, an `over` Tag follows the value; `tag` replaces it with another flag ("over 6×"). */
-export interface MeterProps { label: string; value: number; max: number; valueText?: string; color?: string; cap?: TraceName; tag?: ReactNode; tagTone?: TagTone; className?: string; }
+/** One scale for every meter: 0 to headroom × max (default 1.25), target tick at 80%. Over target, the part past the tick is striped in the same colour. tag: a flag after the label ("6 g over"); icon: a symbol before the label. */
+export interface MeterProps { label: string; value: number; max: number; valueText?: string; color?: string; cap?: TraceName; tag?: ReactNode; tagTone?: TagTone; icon?: ReactNode; headroom?: number; className?: string; }
 /** A sinking fund as a buried acorn stash; 15 acorns = full. */
 /** tags: Tags under the balance (the monthly top-up, the target). targetText is kept for older callers and renders as a plain Tag. */
 export interface StashProps { name: ReactNode; value: number; max: number; valueText: ReactNode; tags?: ReactNode; targetText?: ReactNode; className?: string; }
 /** sub: one line explaining the card, under its title. footer and total: the ruled closing line (a label or hint on the left, a total on the right). */
-export interface CardProps { title?: ReactNode; sub?: ReactNode; action?: ReactNode; footer?: ReactNode; total?: ReactNode; tint?: boolean; nibbled?: boolean; children?: ReactNode; className?: string; }
+/** media: a 40px thumbnail before the title, e.g. the meal's photo. tray: the tinted strip along the card's bottom edge for its actions (Add, Save meal). */
+export interface CardProps { media?: ReactNode; title?: ReactNode; sub?: ReactNode; action?: ReactNode; footer?: ReactNode; total?: ReactNode; tray?: ReactNode; tint?: boolean; nibbled?: boolean; children?: ReactNode; className?: string; }
 /** Tile, then title over subtitle (the category or meal) and tags, then amount over date (or over detail, the amount's unit). */
-export interface ListRowProps { trace?: TraceName; icon?: IconName; leading?: ReactNode; tileColor?: string; title: ReactNode; subtitle?: ReactNode; tags?: ReactNode; amount?: ReactNode; tone?: 'in' | 'over'; date?: Date | ReactNode; detail?: ReactNode; className?: string; }
-/** A short fact in a pill. */
+/** macros: makes a food row. Line 1 is the title alone; line 2 is the subtitle (portion), then protein, carbs, fat and kcal. Neither line wraps. photo: an image URL for the 36px tile. */
+/** kcal: a food row's energy, the rightmost number. removed: struck through, for a ChangeCard's deleted entries. total: the ruled totals line under a meal's rows (title defaults to "Total"). */
+export interface ListRowProps { trace?: TraceName; icon?: IconName; leading?: ReactNode; photo?: string; macros?: MacrosProps; kcal?: number | string | null; removed?: boolean; total?: boolean; tileColor?: string; title: ReactNode; subtitle?: ReactNode; tags?: ReactNode; amount?: ReactNode; tone?: 'in' | 'over'; date?: Date | ReactNode; detail?: ReactNode; className?: string; }
+type NutrientKind = 'energy' | 'protein' | 'carbs' | 'fat';
+/** A nutrient's symbol: flame, drumstick, wheat or drop. labelled names it for screen readers when no word beside it does. */
+export interface NutrientProps { kind: NutrientKind; size?: number; labelled?: boolean; className?: string; }
+/** Under an assistant's reply: a plain heading for what happened ("Logged 4 to lunch"), an action (Undo), then food ListRows without tiles. tags is kept for older callers: its strings become the heading. */
+export interface ChangeCardProps { title?: ReactNode; tags?: (string | ReactNode)[]; action?: ReactNode; undone?: boolean; children: ReactNode; className?: string; }
+/** Protein, carbs and fat in grams, then kcal when given, each number right after its symbol in a fixed 3-digit slot. null shows a dash (not known). */
+export interface MacrosProps { protein?: number | string | null; carbs?: number | string | null; fat?: number | string | null; kcal?: number | string | null; className?: string; }
+/** A short fact in a slot: a small recess sunk into the surface. */
 export interface TagProps { tone?: TagTone; icon?: IconName; size?: 'lg'; children: ReactNode; className?: string; }
 /** A date with the calendar icon. Pass a Date (formatted "Wed 22 Oct") or the text. */
 export interface WhenProps { date?: Date | ReactNode; children?: ReactNode; className?: string; }
@@ -51,7 +62,8 @@ export interface ChipProps { selected?: boolean; onClick?: () => void; children:
 export interface FieldProps { label: string; id?: string; placeholder?: string; defaultValue?: string; prefix?: ReactNode; suffix?: ReactNode; hint?: string; error?: string; inputMode?: string; type?: string; className?: string; }
 export interface LoaderProps { kind?: TrailKind; label?: string; }
 export interface EmptyStateProps { character?: Character; mood?: Mood; title: ReactNode; body?: ReactNode; action?: ReactNode; size?: number; className?: string; }
-export interface ToastProps { character?: Character; mood?: Mood; children: ReactNode; action?: ReactNode; className?: string; }
+/** Takes the BottomNav's place for 5 s; swipe left, right or down to dismiss. progress: time left, 1 to 0, drawn as a line along the bottom. */
+export interface ToastProps { character?: Character; mood?: Mood; children: ReactNode; action?: ReactNode; progress?: number; className?: string; }
 export interface IconProps { name: IconName; size?: number; label?: string; className?: string; }
 export interface WorldProps { className?: string; }
 
@@ -71,6 +83,9 @@ export declare function Meter(p: MeterProps): JSX.Element;
 export declare function Stash(p: StashProps): JSX.Element;
 export declare function Card(p: CardProps): JSX.Element;
 export declare function ListRow(p: ListRowProps): JSX.Element;
+export declare function Macros(p: MacrosProps): JSX.Element;
+export declare function Nutrient(p: NutrientProps): JSX.Element;
+export declare function ChangeCard(p: ChangeCardProps): JSX.Element;
 export declare function Tag(p: TagProps): JSX.Element;
 export declare function When(p: WhenProps): JSX.Element;
 export declare function BottomNav(p: BottomNavProps): JSX.Element;
@@ -91,3 +106,5 @@ export declare function trailSVG(opts: Omit<TrailProps, 'animate' | 'style' | 'c
 export declare function formatDay(date: Date, now?: Date): string;
 export declare const MOODS: Mood[];
 export declare function worldSVG(): string;
+/** A nutrient symbol as SVG markup, for non-React apps. */
+export declare function nutrientSVG(kind: NutrientKind, size?: number, labelled?: boolean): string;

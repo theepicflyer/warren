@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":4,"namespace":"Burrow","components":[{"name":"Mascot"},{"name":"Habitat"},{"name":"Trace"},{"name":"Peek"},{"name":"Trail"},{"name":"TrailGap"},{"name":"TrailSteps"},{"name":"Tunnel"},{"name":"Breadcrumbs"},{"name":"Divider"},{"name":"Ring"},{"name":"Meter"},{"name":"Stash"},{"name":"Card"},{"name":"ListRow"},{"name":"Tag"},{"name":"When"},{"name":"BottomNav"},{"name":"Button"},{"name":"Chip"},{"name":"Segmented"},{"name":"Field"},{"name":"Loader"},{"name":"EmptyState"},{"name":"Toast"},{"name":"Backdrop"},{"name":"Icon"},{"name":"World"}]} */
+/* @ds-bundle: {"format":4,"namespace":"Burrow","components":[{"name":"Mascot"},{"name":"Habitat"},{"name":"Trace"},{"name":"Peek"},{"name":"Trail"},{"name":"TrailGap"},{"name":"TrailSteps"},{"name":"Tunnel"},{"name":"Breadcrumbs"},{"name":"Divider"},{"name":"Ring"},{"name":"Meter"},{"name":"Stash"},{"name":"Card"},{"name":"ListRow"},{"name":"Macros"},{"name":"Nutrient"},{"name":"ChangeCard"},{"name":"Tag"},{"name":"When"},{"name":"BottomNav"},{"name":"Button"},{"name":"Chip"},{"name":"Segmented"},{"name":"Field"},{"name":"Loader"},{"name":"EmptyState"},{"name":"Toast"},{"name":"Backdrop"},{"name":"Icon"},{"name":"World"}]} */
 (function () {
   var React = window.React, h = React.createElement;
   /* ---------- the cast: one SVG string generator per animal, also used to export the asset SVGs ---------- */
@@ -343,7 +343,7 @@
   }
 
   /* ---------- facts: every fact has a place ---------- */
-  /* a short fact in a pill: a per-month amount, a status, a flag. tone: plain (default) | in | over | note */
+  /* a short fact in a slot: a small recess sunk into the surface, so the words sit in a fixed place instead of floating. tone: plain (default) | in | over | note */
   function Tag(p) {
     var lg = p.size === 'lg';
     return h('span', { className: cx('bh-tag', p.tone && p.tone !== 'plain' && 'bh-tag--' + p.tone, lg && 'bh-tag--lg', p.className) },
@@ -398,14 +398,86 @@
     var title = h('h3', { className: 'bh-card__title' }, p.title);
     var card = h('section', { className: cx('bh-card', p.tint && 'bh-card--tint', p.nibbled && 'bh-card--nibbled', p.className) },
       p.title || p.action ? h('header', { className: 'bh-card__head' },
-        p.sub ? h('div', { className: 'bh-card__heading' }, title, h('p', { className: 'bh-card__sub' }, p.sub)) : title, p.action || null) : null,
+        (function () {
+          var heading = p.sub ? h('div', { className: 'bh-card__heading' }, title, h('p', { className: 'bh-card__sub' }, p.sub)) : title;
+          return p.media ? h('div', { className: 'bh-card__lead' }, h('span', { className: 'bh-card__media' }, p.media), heading) : heading;
+        })(), p.action || null) : null,
       p.children,
       p.footer || p.total != null ? h('footer', { className: 'bh-card__foot' }, p.footer ? h('span', null, p.footer) : null,
-        p.total != null ? h('span', { className: 'bh-card__total' }, p.total) : null) : null);
+        p.total != null ? h('span', { className: 'bh-card__total' }, p.total) : null) : null,
+      p.tray ? h('footer', { className: 'bh-card__tray' }, p.tray) : null);
     if (!p.nibbled) return card;
     return h('div', { className: 'bh-nibble' }, card, h(Trace, { name: 'crumbs', size: 26, className: 'bh-nibble__crumbs' }));
   }
+  /* Nutrient symbols, from Bao: a flame for energy, a drumstick for protein, an ear of wheat for carbs, a drop for fat.
+     Stickers on a 24 grid (filled, ink outline). They replace letters (P, C, F) and colour dots wherever a nutrient is named. */
+  var NUT_CREAM = '#fff4e2';
+  var NUT_NAME = { energy: 'calories', protein: 'protein', carbs: 'carbs', fat: 'fat' };
+  var NUT_ART = {
+    energy: '<path paint-order="stroke" fill="var(--energy)" d="M12 2.6C12 2.6 19 8.2 19 14.2C19 18.2 15.9 21.4 12 21.4C8.1 21.4 5 18.2 5 14.2C5 10.8 7.3 8.6 7.3 8.6C7.5 10.6 8.6 11.8 9.6 12.2C9.2 8.2 12 2.6 12 2.6Z"/>' +
+      '<path fill="var(--sunny)" stroke="none" d="M12 20.2C10.5 20.2 9.4 19 9.4 17.6C9.4 15.6 12 13.2 12 13.2C12 13.2 14.6 15.6 14.6 17.6C14.6 19 13.5 20.2 12 20.2Z"/>',
+    protein: '<path paint-order="stroke" fill="' + NUT_CREAM + '" d="M10.78 14.78L6.18 19.38L4.62 17.82L9.22 13.22Z M7.7 19.9a1.7 1.7 0 1 0-3.4 0a1.7 1.7 0 1 0 3.4 0Z M5.8 18a1.7 1.7 0 1 0-3.4 0a1.7 1.7 0 1 0 3.4 0Z"/>' +
+      '<path paint-order="stroke" fill="var(--protein)" d="M9 15C6.8 12.6 7.2 8 10.4 5.4C13.6 2.8 18.4 3 20.2 6C22 9 20.4 13.6 16.8 15.6C14.2 17 11 17 9 15Z"/>' +
+      '<path fill="none" stroke="' + NUT_CREAM + '" stroke-width="1.3" d="M11.6 7.6C12.6 6.4 14.2 5.8 15.6 6"/>',
+    carbs: '<path fill="none" d="M12 21.6V8"/>' +
+      '<ellipse paint-order="stroke" fill="var(--carbs)" cx="12" cy="5.6" rx="2.1" ry="3.3"/>' +
+      [10.6, 15.6].map(function (y) {
+        return '<ellipse paint-order="stroke" fill="var(--carbs)" cx="9.4" cy="' + y + '" rx="2.1" ry="3.3" transform="rotate(-38 9.4 ' + y + ')"/>' +
+          '<ellipse paint-order="stroke" fill="var(--carbs)" cx="14.6" cy="' + y + '" rx="2.1" ry="3.3" transform="rotate(38 14.6 ' + y + ')"/>';
+      }).join(''),
+    fat: '<path paint-order="stroke" fill="var(--fat)" d="M12 2.8C12 2.8 5.2 10.4 5.2 14.6C5.2 18.4 8.2 21.4 12 21.4C15.8 21.4 18.8 18.4 18.8 14.6C18.8 10.4 12 2.8 12 2.8Z"/>' +
+      '<path fill="none" stroke="' + NUT_CREAM + '" stroke-width="1.4" d="M8.7 14.8C8.7 16.7 9.8 18 11.3 18.4"/>'
+  };
+  function nutrientSVG(kind, size, labelled) {
+    var s = size || 16, name = NUT_NAME[kind];
+    return '<svg class="bh-nutrient" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" stroke="var(--outline)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"' +
+      (labelled ? ' role="img" aria-label="' + name + '"><title>' + name + '</title>' : ' aria-hidden="true">') + NUT_ART[kind] + '</svg>';
+  }
+  function Nutrient(p) {
+    return raw('span', cx('bh-nutrient-wrap', p.className), nutrientSVG(p.kind, p.size, p.labelled));
+  }
+  /* Macros: protein, carbs, fat, then kcal (when given) on the right. Each symbol sits right before its number, and every number has a
+     fixed 3-digit slot that starts after the symbol, so neither symbols nor digits move between 1 and 999. kcal is rightmost, so a
+     4-digit kcal only runs on into the margin. Columns line up down the page on every food row and total. */
+  function numCell(kind, name, unit, v, isK) {
+    var none = v == null || v === '';
+    return h('span', { className: cx('bh-num', 'bh-num--' + kind, isK && 'bh-num--k'), title: name + (none ? ': not known' : ': ' + v + ' ' + unit) },
+      h(Nutrient, { kind: kind, size: 14 }),
+      h('span', { className: 'bh-sr' }, name + ' '),
+      h('span', { className: cx('bh-num__val', none && 'is-none') }, none ? '–' : v),
+      h('span', { className: 'bh-sr' }, none ? ' not known' : ' ' + unit));
+  }
+  function Macros(p) {
+    return h('span', { className: cx('bh-macros', p.className) },
+      numCell('protein', 'Protein', 'g', p.protein), numCell('carbs', 'Carbs', 'g', p.carbs), numCell('fat', 'Fat', 'g', p.fat),
+      p.kcal !== undefined ? numCell('energy', 'Energy', 'kcal', p.kcal, true) : null);
+  }
+  /* The card under an assistant's reply that lists what it changed: a plain heading ("Logged 4 to lunch"), Undo, then food rows without tiles. */
+  function ChangeCard(p) {
+    var heading = p.title != null ? p.title : [].concat(p.tags || []).filter(function (t) { return typeof t === 'string'; }).join(', ');
+    return h('section', { className: cx('bh-changes', p.undone && 'is-undone', p.className) },
+      h('header', { className: 'bh-changes__head' },
+        h('span', { className: 'bh-changes__title' }, heading),
+        p.undone ? h('span', { className: 'bh-changes__undone' }, 'Undone') : p.action || null),
+      h('div', { className: 'bh-changes__rows' }, p.children));
+  }
   function ListRow(p) {
+    if (p.total) {
+      return h('div', { className: cx('bh-row', 'bh-row--food', 'bh-row--total', p.className) },
+        h('span', { className: 'bh-row__title' }, p.title || 'Total'),
+        h(Macros, Object.assign({}, p.macros, { kcal: p.kcal })));
+    }
+    if (p.macros) {
+      var hasTile = p.leading || p.trace || p.icon || p.photo;
+      return h('div', { className: cx('bh-row', 'bh-row--food', p.removed && 'is-removed', p.className) },
+        hasTile ? h('span', { className: cx('bh-row__tile', p.photo && 'bh-row__tile--photo'), style: p.tileColor ? { background: 'var(--' + p.tileColor + ')' } : null },
+          p.photo ? h('img', { src: p.photo, alt: '' }) : p.leading || (p.trace ? h(Trace, { name: p.trace, size: 24 }) : h(Icon, { name: p.icon, size: 20 }))) : null,
+        h('span', { className: 'bh-row__body' },
+          h('span', { className: 'bh-row__title' }, p.title),
+          h('span', { className: 'bh-row__line' },
+            h('span', { className: 'bh-row__sub' }, p.subtitle != null ? p.subtitle : null),
+            h(Macros, Object.assign({}, p.macros, { kcal: p.kcal })))));
+    }
     return h('div', { className: cx('bh-row', p.className) },
       h('span', { className: 'bh-row__tile', style: p.tileColor ? { background: 'var(--' + p.tileColor + ')' } : null }, p.leading || (p.trace ? h(Trace, { name: p.trace, size: 30 }) : p.icon ? h(Icon, { name: p.icon, size: 22 }) : null)),
       h('span', { className: 'bh-row__text' }, h('span', { className: 'bh-row__title' }, p.title),
@@ -426,17 +498,23 @@
   }
 
   /* ---------- data ---------- */
+  /* Every meter shares one scale: 0 to 125% of its target, with the target as a tick at 80%. Past the tick the fill keeps its own colour,
+     striped, so a meter over target looks like the others. Label left, "value / target" right in a fixed column; a flag sits after the label. */
   function Meter(p) {
-    var pct = Math.max(0, Math.min(1, (p.value || 0) / (p.max || 1)));
-    var over = (p.value || 0) > (p.max || 1);
-    return h('div', { className: cx('bh-meter', over && 'is-over', p.className) },
-      h('div', { className: 'bh-meter__top' }, h('span', { className: 'bh-meter__label' }, p.label),
-        h('span', { className: 'bh-meter__value' }, p.valueText || (p.value + ' / ' + p.max),
-          p.tag ? h(Tag, { tone: p.tagTone || (over ? 'over' : 'plain') }, p.tag) : over ? h(Tag, { tone: 'over' }, 'over') : null)),
+    var v = Math.max(0, p.value || 0), max = p.max || 1, room = p.headroom || 1.25, end = max * room;
+    var base = Math.min(v, max) / end, extra = Math.max(0, Math.min(v, end) - max) / end, at = 1 / room;
+    var over = v > max, color = p.color || 'accent';
+    var flag = p.tag ? h(Tag, { tone: p.tagTone || (over ? 'over' : 'plain') }, p.tag) : over ? h(Tag, { tone: p.tagTone || 'over' }, 'over') : null;
+    return h('div', { className: cx('bh-meter', over && 'is-over', p.className), style: { '--meter': 'var(--' + color + ')', '--meter-soft': 'var(--' + color + '-soft)' } },
+      h('div', { className: 'bh-meter__top' },
+        h('span', { className: 'bh-meter__label' }, p.icon || null, p.label, flag),
+        h('span', { className: 'bh-meter__value' }, p.valueText || (v + ' / ' + max))),
       h('div', { className: 'bh-meter__rail' },
-        h('div', { className: 'bh-meter__track', role: 'meter', 'aria-valuemin': 0, 'aria-valuemax': p.max, 'aria-valuenow': p.value, 'aria-label': p.label },
-          h('div', { className: 'bh-meter__fill', style: { width: (pct * 100) + '%', background: 'var(--' + (over ? 'tomato' : (p.color || 'accent')) + ')' } })),
-        p.cap ? h(Trace, { name: p.cap, size: 24, className: 'bh-meter__cap', style: { left: (pct * 100) + '%' } }) : null));
+        h('div', { className: 'bh-meter__track', role: 'meter', 'aria-valuemin': 0, 'aria-valuemax': max, 'aria-valuenow': v, 'aria-label': p.label },
+          h('div', { className: 'bh-meter__fill', style: { width: (base * 100) + '%' } }),
+          extra > 0 ? h('div', { className: 'bh-meter__extra', style: { left: (at * 100) + '%', width: (extra * 100) + '%' } }) : null),
+        h('span', { className: 'bh-meter__tick', style: { left: (at * 100) + '%' }, 'aria-hidden': true }),
+        p.cap ? h(Trace, { name: p.cap, size: 24, className: 'bh-meter__cap', style: { left: ((base + extra) * 100) + '%' } }) : null));
   }
   /* progress ring. variant 'sunflower' (petals open as the day fills, makan), 'wreath' (oak leaves, money), or plain */
   function Ring(p) {
@@ -553,11 +631,15 @@
       p.body ? h('p', { className: 'bh-empty__body' }, p.body) : null,
       p.action || null);
   }
+  /* The toast takes the BottomNav's place for a few seconds: same spot, same size, so it covers nothing on the page.
+     Swipe it left, right or down to dismiss; the line along the bottom shows the time left. */
   function Toast(p) {
+    var left = p.progress != null ? Math.max(0, Math.min(1, p.progress)) : null;
     return h('div', { className: cx('bh-toast', p.className), role: 'status' },
-      h('span', { className: 'bh-toast__bub' }, h(Mascot, { character: p.character || 'bao', mood: p.mood || 'joy', size: 40 })),
+      h(Mascot, { character: p.character || 'bao', mood: p.mood || 'joy', size: 40, className: 'bh-toast__who' }),
       h('span', { className: 'bh-toast__text' }, p.children),
-      p.action || null);
+      p.action || null,
+      left != null ? h('span', { className: 'bh-toast__time', style: { width: (left * 100) + '%' }, 'aria-hidden': true }) : null);
   }
   /* ---------- the world: all four habitats in one landscape ---------- */
   function placed(who, mood, x, y, s) { return '<svg x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" viewBox="0 0 120 120">' + CAST[who](mood) + '</svg>'; }
@@ -596,7 +678,7 @@
   function World(p) { return raw('div', cx('bh-world-wrap', p && p.className), worldSVG()); }
 
   window.Burrow = Object.assign(window.Burrow || {}, {
-    Mascot: Mascot, Habitat: Habitat, Trace: Trace, Peek: Peek, Trail: Trail, TrailGap: TrailGap, TrailSteps: TrailSteps, Tunnel: Tunnel, Breadcrumbs: Breadcrumbs, Divider: Divider, Ring: Ring, Meter: Meter, Stash: Stash, Card: Card, ListRow: ListRow, Tag: Tag, When: When,
+    Mascot: Mascot, Habitat: Habitat, Trace: Trace, Peek: Peek, Trail: Trail, TrailGap: TrailGap, TrailSteps: TrailSteps, Tunnel: Tunnel, Breadcrumbs: Breadcrumbs, Divider: Divider, Ring: Ring, Meter: Meter, Stash: Stash, Card: Card, ListRow: ListRow, Macros: Macros, Nutrient: Nutrient, ChangeCard: ChangeCard, nutrientSVG: nutrientSVG, Tag: Tag, When: When,
     BottomNav: BottomNav, Button: Button, Chip: Chip, Segmented: Segmented, Field: Field, Loader: Loader, EmptyState: EmptyState, Toast: Toast, Backdrop: Backdrop, Icon: Icon, World: World,
     mascotSVG: mascotSVG, traceSVG: traceSVG, trailSVG: trailSVG, worldSVG: worldSVG, formatDay: formatDay, MOODS: MOODS
   });
