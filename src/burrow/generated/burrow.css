@@ -58,9 +58,13 @@
 .bh-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .bh-card__title { margin: 0; font: 600 19px/24px var(--font-display); color: var(--ink); }
 .bh-card__heading { display: grid; gap: 2px; min-width: 0; }
+.bh-card__lead { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.bh-card__media { width: 40px; height: 40px; flex: none; overflow: hidden; border-radius: var(--radius-sm); border: var(--border-sticker) solid var(--outline); background: var(--surface-sunk); }
+.bh-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bh-card__sub { margin: 0; font: 400 14px/20px var(--font-sans); color: var(--ink-muted); }
 /* A card's closing line (a total, a hint, an action) sits on its own ruled footer. */
 .bh-card__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); padding-top: var(--space-3); border-top: var(--border-hair) solid var(--line); font: 400 14px/20px var(--font-sans); color: var(--ink-muted); }
+.bh-card__tray { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4)); padding: 10px var(--space-4); background: var(--surface-tray); border-top: var(--border-hair) solid var(--line); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
 .bh-card__total { font: 600 16px/22px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
 
 /* ListRow */
@@ -77,6 +81,25 @@
 .bh-row__amount.is-in { color: var(--mint-text); }
 .bh-row__amount.is-over { color: var(--tomato-text); }
 .bh-row__detail { font: 400 12px/16px var(--font-sans); letter-spacing: .02em; color: var(--ink-muted); white-space: nowrap; }
+.bh-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Food rows: the name alone on line 1; the portion, then protein, carbs, fat and kcal on line 2. Name and portion never wrap (ellipsis).
+   The numbers sit flush right in fixed slots, so every column lines up down the whole page and nothing moves as values change. */
+.bh-row--food { align-items: flex-start; gap: 10px; }
+.bh-row--food .bh-row__tile { width: 36px; height: 36px; overflow: hidden; }
+.bh-row--food .bh-row__tile .bh-icon { width: 20px; height: 20px; }
+.bh-row__tile--photo { background: var(--surface-sunk); }
+.bh-row__tile--photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bh-row__body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.bh-row__line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bh-row--food .bh-row__sub { display: block; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bh-row--total { align-items: center; justify-content: space-between; padding: 10px 0 12px; border-top: var(--border-sticker) solid var(--ink) !important; }
+.bh-row--total .bh-row__title { font-weight: 600; font-size: 14px; line-height: 20px; }
+.bh-row--total .bh-num { font-weight: 600; }
+.bh-macros { display: flex; flex: none; gap: 6px; }
+.bh-num { display: inline-flex; align-items: center; gap: 4px; width: 46px; font: 400 14px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+.bh-num__val { width: 3ch; text-align: left; }
+.bh-num__val.is-none { color: var(--ink-muted); }
+.bh-num--k { width: 48px; font-weight: 600; }
 
 /* When: a date, always with the calendar icon */
 .bh-when { display: inline-flex; align-items: center; gap: var(--space-1); font: 600 12px/16px var(--font-sans); letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--ink-muted); white-space: nowrap; }
@@ -84,12 +107,13 @@
 
 /* Tag: a short fact in a pill. The fill carries the meaning and the words say it too.
    plain: neutral (a target, "Paused") · in: money coming in, a fund's top-up · over: past a limit · note: a heads-up. */
-.bh-tag { display: inline-flex; align-items: center; gap: var(--space-1); padding: 3px var(--space-2); border-radius: var(--radius-pill); background: var(--surface-sunk); color: var(--ink); font: 600 12px/16px var(--font-sans); letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Tag: a slot, not a sticker. A small recess sunk into the surface (inset shadow, square-ish corners), so its words read as having a fixed place. */
+.bh-tag { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-2); border-radius: var(--radius-slot); background: var(--surface-sunk); box-shadow: var(--shadow-slot); color: var(--ink); font: 600 12px/18px var(--font-sans); letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bh-tag .bh-icon { width: 14px; height: 14px; flex: none; }
 .bh-tag--in { background: var(--mint-soft); color: var(--mint-text); }
 .bh-tag--over { background: var(--tomato-soft); color: var(--ink); }
 .bh-tag--note { background: var(--sunny-soft); color: var(--ink); }
-.bh-tag--lg { padding: 4px var(--space-3); font-size: 14px; line-height: 20px; letter-spacing: 0; }
+.bh-tag--lg { padding: 6px var(--space-3); border-radius: var(--radius-sm); font-size: 14px; line-height: 20px; letter-spacing: 0; }
 .bh-tag--lg .bh-icon { width: 16px; height: 16px; }
 .bh-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Facts in a Habitat header, under the title. A tinted pill would vanish into the sky, so they sit on surface. */
@@ -108,15 +132,16 @@
 
 /* Meter */
 .bh-meter { display: grid; gap: 6px; font-family: var(--font-sans); }
-.bh-meter__top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
-.bh-meter__label { font: 600 12px/16px var(--font-sans); letter-spacing: .02em; color: var(--ink); }
-.bh-meter__value { font: 400 14px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink-muted); }
-.bh-meter__over { color: var(--tomato-text); font-weight: 600; }
-.bh-meter__value .bh-tag { margin-left: var(--space-1); vertical-align: 1px; }
+.bh-meter__top { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
+.bh-meter__label { display: inline-flex; align-items: center; gap: 5px; font: 600 12px/16px var(--font-sans); letter-spacing: .02em; color: var(--ink); }
+.bh-meter__label .bh-tag { margin-left: var(--space-1); padding: 0 6px; }
+.bh-meter__value { font: 400 14px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink-muted); white-space: nowrap; }
 .bh-meter__rail { position: relative; }
 .bh-meter__cap { position: absolute; top: 50%; transform: translate(-50%, -50%); transition: left .5s cubic-bezier(.34, 1.56, .64, 1); }
-.bh-meter__track { height: 14px; border-radius: var(--radius-pill); background: var(--surface-sunk); border: var(--border-sticker) solid var(--outline); overflow: hidden; }
-.bh-meter__fill { height: 100%; border-radius: var(--radius-pill); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .45); transition: width .5s cubic-bezier(.34, 1.56, .64, 1); }
+.bh-meter__track { position: relative; height: 14px; border-radius: var(--radius-pill); background: var(--surface-sunk); border: var(--border-sticker) solid var(--outline); overflow: hidden; }
+.bh-meter__fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--meter); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .45); transition: width .5s cubic-bezier(.34, 1.56, .64, 1); }
+.bh-meter__extra { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, var(--meter) 0 4px, var(--meter-soft) 4px 7px); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .45); }
+.bh-meter__tick { position: absolute; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--outline); }
 
 /* Ring */
 .bh-ring { position: relative; display: inline-grid; place-items: center; }
@@ -131,11 +156,13 @@
 .bh-empty__body { margin: 0 0 var(--space-2); max-width: 30ch; font: 400 16px/22px var(--font-sans); color: var(--ink-muted); }
 
 /* Toast */
-.bh-toast { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3); border-radius: var(--radius-pill); background: var(--ink); color: var(--paper); box-shadow: var(--shadow-lift); font: 600 15px/20px var(--font-sans); animation: bh-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
-.bh-toast__bub { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--paper); flex: none; }
-.bh-toast__text { flex: 1; }
-.bh-toast .bh-btn--ghost { color: var(--paper); min-height: 36px; padding: 0 12px; }
-.bh-toast .bh-btn--ghost:hover { background: transparent; text-decoration: underline; }
+/* Toast: takes the BottomNav's place (same position, width and height) for 5 seconds, then the nav comes back.
+   Swipe left, right or down to dismiss: implementations move it with --toast-dx / --toast-dy while dragging. */
+.bh-toast { position: relative; box-sizing: border-box; display: flex; align-items: center; gap: 10px; min-height: 70px; padding: 0 var(--space-2) 0 var(--space-3); border-radius: var(--radius-pill); background: var(--ink); border: var(--border-sticker) solid var(--ink); color: var(--paper); box-shadow: var(--shadow-lift); overflow: hidden; font: 600 15px/20px var(--font-sans); touch-action: none; transform: translate(var(--toast-dx, 0), var(--toast-dy, 0)); animation: bh-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
+.bh-toast__who { flex: none; }
+.bh-toast__text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bh-toast .bh-btn { flex: none; min-height: 44px; padding: 0 var(--space-4); border: 0; box-shadow: none; background: var(--sunny); color: var(--on-accent); }
+.bh-toast__time { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--sunny); opacity: .7; transition: width .1s linear; }
 @keyframes bh-pop { from { transform: translateY(12px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
 
 
@@ -291,3 +318,21 @@
   .bh-meter__fill, .bh-ring__fill, .bh-ring__cap, .bh-btn, .bh-petal, .bh-wleaf { transition: none; }
   .bh-trail--animate .bh-trail__step { animation: none; }
 }
+.bh-card__title .bh-tag { margin-left: var(--space-2); vertical-align: 3px; }
+
+/* Nutrient symbols: flame, drumstick, wheat, drop. 16px beside 14-16px text, 14px in the Macros strip. */
+.bh-nutrient-wrap { display: inline-flex; flex: none; }
+.bh-nutrient { display: block; flex: none; }
+.bh-row--food.is-removed .bh-row__title, .bh-row--food.is-removed .bh-row__sub { text-decoration: line-through; color: var(--ink-muted); }
+.bh-row--food.is-removed .bh-macros { opacity: .55; }
+/* ChangeCard: under an assistant reply, what it logged or saved. Flat, ruled in line, rows at chat density. */
+.bh-changes { border: var(--border-sticker) solid var(--line); border-radius: var(--radius-md); padding: 6px var(--space-3); background: var(--surface); transition: opacity .2s; }
+.bh-changes.is-undone { opacity: .6; }
+.bh-changes.is-undone .bh-row__title { text-decoration: line-through; }
+.bh-changes__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 40px; }
+.bh-changes__title { font: 600 14px/20px var(--font-sans); color: var(--ink); }
+.bh-changes__undone { font: 400 14px/20px var(--font-sans); color: var(--ink-muted); }
+.bh-changes__rows .bh-row { padding: 10px 0; }
+.bh-changes__rows .bh-row:first-child { border-top: var(--border-hair) solid var(--line); }
+.bh-changes__group { margin: 0; padding: 10px 0 2px; border-top: var(--border-hair) solid var(--line); font: 600 12px/16px var(--font-sans); letter-spacing: .02em; color: var(--ink-muted); }
+.bh-changes__group + .bh-row { border-top: 0 !important; }

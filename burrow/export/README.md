@@ -9,7 +9,7 @@ Burrow is the shared look for the household's apps: **makan** (food and macros) 
 5. **Only natural things.** Illustrations show animals, plants, soil, water and what animals make from them. No machines, tools or man-made props (no wheels, jars, signs).
 6. **Stickers, not glass.** Animals and art have a thick ink outline and a thin cream rim; controls have a 2px `outline` and a hard `shadow-sticker`. No gradients, blur or glow.
 7. **Kind, never preachy.** Going over a target is information, not a failure.
-8. **Every fact has a place.** Each kind of information has one place and one look, the same in both apps: the category in the tile and under the title, values on the right, the date under the value, short facts in pills. Nothing sits on a screen as a loose line of grey text.
+8. **Every fact has a place.** Each kind of information has one place and one look, the same in both apps: the category in the tile and under the title, values on the right, the date under the value, short facts in slots. Nothing sits on a screen as a loose line of grey text.
 
 ## The cast
 
@@ -32,7 +32,7 @@ The animals are drawn with real anatomy (heads, limbs, feet, two-tone fur, whisk
 - **Habitat headers.** Top-level screens open with their animal's home: makan Today = `meadow` (Bao, sunflowers, berries), money Home and Budgets = `oak` (Kacang, branch, acorns, a mushroom), History and Search = `burrow` (Gali, soil, roots, footprints), Settings = `river` (Kayu, reeds, a log dam, a lily pad).
 - **Peek.** An animal sits behind the top edge of a card or the BottomNav with its paws over the edge, or leans around a card's right edge (`edge="side"`). One Peek per screen, on the card that matters most now.
 - **Hero numbers.** makan's day is a sunflower: a petal opens for each share of the target eaten, and the seed head shows what's left (Ring `variant="sunflower"`). money's month is an oak wreath: a leaf turns green for each share spent, with acorns at its base (Ring `variant="wreath"`).
-- **Meters.** Macro meters end in a sunflower (`cap="sunflower"`); budget meters end in an acorn (`cap="acorn"`).
+- **Meters.** Macro meters end in a sunflower (`cap="sunflower"`); budget meters end in an acorn (`cap="acorn"`). Every meter shares one scale with the target tick at 80%, so over-target meters look like the others (Meter).
 - **Sinking funds** are Kacang's buried stashes, acorns piled to the share of the target (Stash).
 - **Logged meals** get a bite out of the card corner and a few crumbs (Card `nibbled`).
 - **List tiles** use a trace instead of a generic icon where one fits: seed, crumbs or berry for food; acorn, leaf or pinecone for money.
@@ -51,8 +51,12 @@ A glance should tell you what something is before you read it, so each kind of f
 | Its category or meal | under the title, then any Tags | ListRow `subtitle`, `tags` |
 | Its value | on the right, `body-strong`, with its unit | ListRow `amount` |
 | Its date | under the value, with the `calendar` icon | ListRow `date` (When) |
+| A food's protein, carbs, fat and energy | line 2 of its row, after the portion, each number right after its symbol in a fixed slot, kcal rightmost | ListRow `macros` and `kcal` (Macros) |
+| A meal's totals | a ruled row under its foods, in the same columns | ListRow `total` |
+| A card's actions (Add, Save meal) | the tinted tray along its bottom edge | Card `tray` |
+| What an assistant's reply changed | a card under the reply, one food row per change | ChangeCard |
 | A value's unit or comparison | under the value instead of a date: "a month", "saved", "of S$ 350" | ListRow `detail` |
-| A per-month amount, a target, a status, a flag | a pill | Tag |
+| A per-month amount, a target, a status, a flag | a slot (a small recess in the surface) | Tag |
 | The screen's one number | the Habitat title ("S$ 690 left") | Habitat |
 | Other header facts | a row of Tags under the title | `bh-facts` |
 | How the period is going | one large Tag under the Ring | Tag `size="lg"` |
@@ -65,7 +69,7 @@ A glance should tell you what something is before you read it, so each kind of f
 - **Dates** have one format, "Wed 22 Oct", with the year added when it is not this year; "Today" and "Yesterday" may replace it, and a time follows when it matters ("Today 12:40"). A date always carries the `calendar` icon (When) or sits in a Tunnel chamber with its month. Never show a bare day number.
 - **Never join facts with a dot.** "Mon 9 Nov · Gym", "Lunch · 719 kcal" and "S$ 125 saved · +S$ 150 a month" each become separate places: a date under the value, a total in the footer, a Tag.
 - **Per-month amounts are always Tags**: a fund's top-up "+S$ 110 a month" is an `in` Tag; a budget's "S$ 700 a month" is a `plain` Tag in a header, or the row value with "a month" as its `detail`.
-- **Values always carry their unit**: "380 kcal", "S$ 5.50", "6 of 7 months". Never a bare number beside a word. Where a row has no room, a symbol that names the unit may stand in for it (makan's nutrient symbols before a row's macros and calories).
+- **Values always carry their unit**: "380 kcal", "S$ 5.50", "6 of 7 months". Never a bare number beside a word. Where a row has no room, a symbol that names the unit may stand in for it (makan's nutrient symbols right before a row's macros and calories).
 - **Tags are for reading, Chips and Segmented options for tapping.** Don't make a Tag clickable.
 
 ## Wayfinding: trails
@@ -105,8 +109,8 @@ The three Dashboard examples (makan Today, money Home, History) show these rules
 - Text on the sunflower's seed head and in tunnel chambers is fixed cream #fff4e2 on fixed browns, the same in both themes.
 - Text and icons on any bright fill (`accent`, `tomato`, `mint`, `sunny`, `sky`) use `on-accent`, never white.
 - Meaning colours always come with a word or sign: `tomato-text` + "over", `mint-text` + "+". Money out stays `ink`.
-- Tag fills: `surface-sunk` with `ink` (plain), `mint-soft` with `mint-text` (money in, top-ups), `tomato-soft` with `ink` (over; `tomato-text` there is under 4.5:1 in light), `sunny-soft` with `ink` (a heads-up). In a Habitat header every Tag sits on `surface`.
-- Macros: `protein` (sky), `carbs` (sunny), `fat` (mint), always labelled.
+- Tag fills (in a sunk slot, `shadow-slot`): `surface-sunk` with `ink` (plain), `mint-soft` with `mint-text` (money in, top-ups), `tomato-soft` with `ink` (over; `tomato-text` there is under 4.5:1 in light), `sunny-soft` with `ink` (a heads-up). In a Habitat header every Tag sits on `surface`.
+- Macros: `protein` (sky), `carbs` (sunny), `fat` (mint), always labelled. `energy` (tomato) colours the flame. Their soft fills (`protein-soft`, `carbs-soft`, `fat-soft`) stripe a Meter past its target. Always in the order protein, carbs, fat, then energy.
 - Links and the focus ring: `sky-text`, a solid 3px outline with 2px offset.
 - Animals and traces keep their own fixed colours (`fur-hamster`, `fur-squirrel`, `skin-molerat`, `fur-beaver`) in both themes.
 
@@ -117,7 +121,7 @@ The three Dashboard examples (makan Today, money Home, History) show these rules
 
 ## Shape, space and depth
 
-- Corners: `radius-lg` for cards, sheets and habitat headers, `radius-sm` for inputs and tiles, `radius-pill` for buttons, chips, meters and the nav.
+- Corners: `radius-lg` for cards, sheets and habitat headers, `radius-sm` for inputs and tiles, `radius-slot` for Tags, `radius-pill` for buttons, chips, meters and the nav.
 - Spacing: `space-4` page gutter and card padding; between stacked cards use a TrailGap (40–56px) where a trail runs, otherwise `space-3`.
 - Depth: `shadow-lift` for things that float, `shadow-sticker` for things you press.
 - Outlines: `border-sticker` (2px) in `outline` on controls; art uses a 2.8px outer ink outline with a cream rim and 1–2px inner lines.
@@ -132,6 +136,7 @@ The three Dashboard examples (makan Today, money Home, History) show these rules
 
 - Navigation and actions use round-capped stroke icons (Icon component), 2.2 stroke on a 24 grid, in `currentColor`. For anything missing, use Phosphor Icons Bold.
 - Two icons mark kinds of facts: `calendar` before every date, `repeat` before how often something recurs ("Monthly").
+- Nutrients are marked with their sticker symbols (Nutrient): a flame for energy, a drumstick for protein, an ear of wheat for carbs, a drop for fat. Never letters (P, C, F) or colour dots. The same symbols appear in rows, Meters, Tags, charts and the chat.
 - Content uses traces (Trace component): small natural objects that belong to an animal. A trace is never a button by itself.
 - No emoji as icons.
 

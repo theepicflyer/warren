@@ -7,6 +7,7 @@ export type TraceName = 'seed' | 'crumbs' | 'sunflower' | 'berry' | 'acorn' | 'l
 export type TrailKind = 'footprints' | 'crumbs' | 'seeds' | 'acorns' | 'leaves' | 'chips';
 export type HabitatKind = 'meadow' | 'oak' | 'burrow' | 'river';
 export type IconName = 'home' | 'plus' | 'chart' | 'gear' | 'camera' | 'bowl' | 'wallet' | 'search' | 'arrow-up' | 'arrow-down' | 'check' | 'calendar' | 'repeat';
+export type NutrientKind = 'energy' | 'protein' | 'carbs' | 'fat';
 
 export interface TrailOptions {
 	kind: TrailKind;
@@ -47,6 +48,7 @@ export const TRAIL: Record<TrailKind, { spacing: number; draw: (p: TrailPoint, i
 export const HAB: Record<HabitatKind, Habitat>;
 export const ICONS: Record<IconName, string>;
 export const STEP_MARK: Record<TrailKind, TraceName>;
+export const NUT_NAME: Record<NutrientKind, string>;
 
 /** One animal in a mood, as an SVG string (120 × 120 view box). */
 export function mascotSVG(character: Character, mood?: Mood, label?: string): string;
@@ -68,3 +70,5 @@ export function cloud(x: number, y: number, s: number): string;
 export function tr(name: TraceName, x: number, y: number, s?: number, rot?: number): string;
 /** "Wed 22 Oct", with the year when it isn't now's. */
 export function formatDay(date: Date, now?: Date): string;
+/** A nutrient's symbol (flame, drumstick, wheat, drop) as an SVG string; labelled names it for screen readers. */
+export function nutrientSVG(kind: NutrientKind, size?: number, labelled?: boolean): string;
