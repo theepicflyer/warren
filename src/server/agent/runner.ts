@@ -129,10 +129,17 @@ function isFileRef(block: Block): boolean {
   return block?.type === "image" && block.source?.type === "file_ref";
 }
 
+function hasFileRef(blocks: unknown): boolean {
+  return (
+    Array.isArray(blocks) &&
+    blocks.some((b: Block) => isFileRef(b) || (b?.type === "tool_result" && hasFileRef(b.content)))
+  );
+}
+
 function hydrate(messages: Message[], db: Db, dataDir: string, cache: Map<number, Block>): Message[] {
-  return messages.map((msg) => {
-    if (!Array.isArray(msg.content) || !msg.content.some(isFileRef)) return msg;
-    const content = (msg.content as Block[]).map((block) => {
+  const swap = (blocks: Block[]): Block[] =>
+    blocks.map((block) => {
+      if (block?.type === "tool_result" && hasFileRef(block.content)) return { ...block, content: swap(block.content) };
       if (!isFileRef(block)) return block;
       const id = block.source.file_id as number;
       if (!cache.has(id)) {
@@ -147,8 +154,7 @@ function hydrate(messages: Message[], db: Db, dataDir: string, cache: Map<number
       }
       return cache.get(id)!;
     });
-    return { ...msg, content };
-  });
+  return messages.map((msg) => (hasFileRef(msg.content) ? { ...msg, content: swap(msg.content as Block[]) } : msg));
 }
 
 function getThread(db: Db, user: User, scope: string, model: string, threadId?: number | null): Thread {
@@ -325,10 +331,16 @@ export async function* runTurn(deps: AgentDeps, input: TurnInput): AsyncGenerato
         const outcome = runTool(agent.tools, ctx, block.name, block.input);
         const tool = agent.tools.find((t) => t.name === block.name);
         if (tool?.writes && !outcome.isError) wrote = true;
+        const content = outcome.images
+          ? [
+              { type: "text", text: outcome.text },
+              ...outcome.images.flatMap((image) => [{ type: "text", text: image.label }, fileRef(image.fileId)]),
+            ]
+          : outcome.text;
         results.push({
           type: "tool_result",
           tool_use_id: block.id,
-          content: outcome.text,
+          content,
           ...(outcome.isError ? { is_error: true } : {}),
         });
       }

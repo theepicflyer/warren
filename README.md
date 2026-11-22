@@ -17,7 +17,7 @@ Warren provides everything around the domain layer, so an app is its tables, its
 | Part | What it does |
 | --- | --- |
 | `createApp` | Wires everything below into one server on one port. |
-| Tools (`defineTool`) | One definition per operation, with a zod schema. The agent and MCP both run it through the same validation and transaction. |
+| Tools (`defineTool`) | One definition per operation, with a zod schema. The agent and MCP both run it through the same validation and transaction. A tool can show the agent the person's stored photos (`withImages`). |
 | Agent (`runTurn`) | The streaming tool loop against the Messages API: frozen cached prefix, append-only history, undo of a whole turn, thumbs up/down, cost per turn. |
 | MCP | An MCP server with an OAuth proxy in front of Pocket ID, so claude.ai can connect. |
 | Sign-in | OIDC against Pocket ID for the browser, signed session cookies, a dev login for local work. |

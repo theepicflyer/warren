@@ -2,10 +2,12 @@ import fs from "node:fs";
 import { APIError } from "@anthropic-ai/sdk";
 import { eq } from "drizzle-orm";
 import { expect, test } from "vitest";
+import { z } from "zod";
 import {
   type AgentConfig,
   type AgentDefinition,
   type AgentEvent,
+  defineTool,
   devUser,
   rateTurn,
   runTurn,
@@ -13,6 +15,7 @@ import {
   schema,
   scopeTurns,
   undoTurn,
+  withImages,
 } from "../src/server/index.js";
 import { call, FakeClaude, message, notes, say, SYSTEM_PROMPT, testApp, thinking, tools } from "./helpers.js";
 
@@ -242,4 +245,58 @@ test("photos are stored as references and sent as image data", async () => {
   const theirs = saveFile(app.db, app.config.dataDir, { userId: bob.id, mediaType: "image/png", data: png });
   const events = await run(new FakeClaude([]), "look", { fileIds: [theirs.id] });
   expect(events).toEqual([{ type: "error", message: expect.stringContaining("Something went wrong") }]);
+});
+
+test("a tool can show the agent stored photos, sent as image data and kept as references", async () => {
+  const { app, user, turn } = setup();
+  const png = Buffer.from("not really a png");
+  const mine = saveFile(app.db, app.config.dataDir, { userId: user.id, mediaType: "image/png", data: png });
+  const bob = devUser(app.db, "Bob");
+  const theirs = saveFile(app.db, app.config.dataDir, { userId: bob.id, mediaType: "image/png", data: png });
+  const showPhoto = defineTool({
+    name: "show_photo",
+    description: "Show a stored photo.",
+    input: z.strictObject({ id: z.number().int() }),
+    writes: false,
+    expose: ["agent"],
+    run: (_ctx, { id }) => withImages("Here it is.", [{ fileId: id, label: `Photo #${id}:` }]),
+  });
+  const withPhotos: AgentDefinition = { ...agent, tools: [...tools, showPhoto] };
+  const run = async (client: FakeClaude, text: string, threadId?: number) => {
+    const events: AgentEvent[] = [];
+    const deps = { db: app.db, dataDir: app.config.dataDir, agent: withPhotos, config: HAIKU, client };
+    for await (const e of runTurn(deps, { userId: user.id, scope: DAY, text, threadId })) events.push(e);
+    return events;
+  };
+
+  const client = new FakeClaude([
+    message([call("tu_1", "show_photo", { id: mine.id })], "tool_use"),
+    message([say("Looks like soup.")], "end_turn"),
+  ]);
+  const end = done(await run(client, "what was that?"));
+  const stored = [
+    { type: "text", text: "Here it is." },
+    { type: "text", text: `Photo #${mine.id}:` },
+    { type: "image", source: { type: "file_ref", file_id: mine.id } },
+  ];
+  expect(turn(end.turn.id).messages[2]).toEqual({
+    role: "user",
+    content: [{ type: "tool_result", tool_use_id: "tu_1", content: stored }],
+  });
+  expect(end.turn.file_ids).toEqual([]);
+  const image = { type: "image", source: { type: "base64", media_type: "image/png", data: png.toString("base64") } };
+  expect(client.requests[1]!.messages[2].content[0].content[2]).toEqual(image);
+
+  // replayed in the next turn as image data too, while the stored history keeps the reference
+  const later = new FakeClaude([message([say("Ok.")], "end_turn")]);
+  await run(later, "thanks", end.turn.thread_id);
+  expect(later.requests[0]!.messages[2].content[0].content[2]).toEqual(image);
+  expect(turn(end.turn.id).messages[2]).toEqual({
+    role: "user",
+    content: [{ type: "tool_result", tool_use_id: "tu_1", content: stored }],
+  });
+
+  // a tool can't show someone else's photo
+  const events = await run(new FakeClaude([message([call("tu_2", "show_photo", { id: theirs.id })], "tool_use")]), "and theirs?");
+  expect(events.at(-1)).toEqual({ type: "error", message: expect.stringContaining("Something went wrong") });
 });
