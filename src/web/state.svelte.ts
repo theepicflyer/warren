@@ -28,13 +28,15 @@ export type Toast<Extra> = { id: number; message: string; action: ToastAction | 
 /**
  * Toasts. `Extra` is what the app's toast shows besides the message (Burrow's animal and mood, say);
  * `onError` is the extra for errors. A toast with an action stays longer. `items` is every toast on
- * screen, oldest first; `current` the newest, for apps that show one at a time.
+ * screen, oldest first; `current` the newest, for apps that show one at a time (`max: 1`, where a
+ * new toast replaces the one on show). With `timed: false` nothing here dismisses a toast: the app's
+ * toast times it (warren/burrow's `Toast` does, and stops the clock while a finger holds it).
  */
 export class Toasts<Extra extends object = object> {
 	items = $state<Toast<Extra>[]>([]);
 	#id = 0;
 
-	constructor(private options: { defaults: Extra; onError: Partial<Extra>; max?: number }) {}
+	constructor(private options: { defaults: Extra; onError: Partial<Extra>; max?: number; timed?: boolean }) {}
 
 	get current(): Toast<Extra> | null {
 		return this.items.at(-1) ?? null;
@@ -45,7 +47,7 @@ export class Toasts<Extra extends object = object> {
 		const id = ++this.#id;
 		const toast = { ...this.options.defaults, ...(extra as Partial<Extra>), id, message, action } as Toast<Extra>;
 		this.items = [...this.items, toast].slice(-(this.options.max ?? 3));
-		setTimeout(() => this.dismiss(id), ms ?? (action ? 7000 : 4000));
+		if (this.options.timed !== false) setTimeout(() => this.dismiss(id), ms ?? (action ? 7000 : 4000));
 		return id;
 	}
 

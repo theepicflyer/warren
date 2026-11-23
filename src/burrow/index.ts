@@ -16,3 +16,4 @@ export { default as World } from './World.svelte';
 export { default as Breadcrumbs } from './Breadcrumbs.svelte';
 export { default as TunnelRow } from './TunnelRow.svelte';
 export { default as Loader } from './Loader.svelte';
+export { default as Toast } from './Toast.svelte';
