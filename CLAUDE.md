@@ -36,7 +36,7 @@ npm run build          # dist/, what apps import
 
 Shipped as source (Svelte and TypeScript), compiled by the app's Vite; `package.json` exports it as `warren/web` and `warren/web/motion.css`. It imports only `svelte`, never `$app/*`: the app passes in what needs SvelteKit (`configureApi({ onUnauthorized: () => goto('/login') })`, `onNavigate((n) => pageTransition(n, { tabs }))`), so it type-checks on its own.
 
-- `api.ts`, `state.svelte.ts` (`Session`, `Toasts`, `changes`), `data.svelte.ts` (`loaded` and its cache).
+- `api.ts`, `state.svelte.ts` (`Session`, `Toasts`, `changes`), `data.svelte.ts` (`loaded` and its cache). Both apps make their `Toasts` with `max: 1, timed: false` and show them with warren/burrow's `Toast`, which takes the nav's place, times each one (5 s, stopped while held) and swipes away; the app positions it and hides its nav while `toasts.current` is set.
 - `navigation.ts`: `direction()` decides forward, back or tab (tested in `test/web.test.ts`); `pageTransition` sets `html[data-nav]` for the transition and `html[data-wn-arrived]` for the life of the screen (`arrivedBy()`), and runs a view transition. `motion.css` animates on that attribute and keeps elements marked `data-wn-keep` still.
 - `gestures.ts`: `dragToDismiss` (pointer events on a handle) and `swipeBack` (touch events, because Safari cancels pointer events when it might scroll).
 - `motion.ts`: Svelte transitions that stand still under reduced motion, `slidingPill`, `haptic`. `Count.svelte`.
@@ -49,7 +49,7 @@ Shipped as source (Svelte and TypeScript), compiled by the app's Vite; `package.
 - `burrow/export/` is the Burrow artifact's export exactly as published (`README.md`, `tokens.json`, `components/bundle.{js,css}`, `components/index.d.ts`). Never edit it; copy it again from the artifact.
 - `burrow/generate.cjs` (no dependencies) writes `src/burrow/generated/`: `tokens.css` (light, dark with the device or `html[data-theme]`), `type.css`, `burrow.css`, `art.js`/`art.d.ts` (the bundle's SVG string generators without its React components) and `scenes.ts` (stash and wreath per count). Never hand-edit those either; `test/burrow.test.ts` fails when they don't match the export. When the export changes shape, fix the generator.
 - `package.json` exports `warren/burrow` (`src/burrow/index.ts`: the art and the components) and `warren/burrow/{tokens,type,burrow}.css`, as source like `warren/web`. `npm run check:web` checks `src/burrow` too.
-- The Svelte components (`Mascot`, `Trace`, `Habitat`, `Peek`, `World`, `Breadcrumbs`, `TunnelRow`, `Loader`) are Warren's ports of Burrow's components, used by both apps or plainly app-neutral, and drawn only with Burrow's own `bh-*` classes (no Tailwind: Cache has none). An app's own components on Burrow (Bao's sunflower ring, Cache's wreath and stash, each app's meter and empty state) stay in the app.
+- The Svelte components (`Mascot`, `Trace`, `Habitat`, `Peek`, `World`, `Breadcrumbs`, `TunnelRow`, `Loader`, `Toast`) are Warren's ports of Burrow's components, used by both apps or plainly app-neutral, and drawn only with Burrow's own `bh-*` classes (no Tailwind: Cache has none). An app's own components on Burrow (Bao's sunflower ring, Cache's wreath and stash, each app's meter and empty state) stay in the app.
 
 ## Rules that keep the agent cheap and correct
 

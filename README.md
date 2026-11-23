@@ -32,7 +32,7 @@ Warren provides everything around the domain layer, so an app is its tables, its
 | Part | What it does |
 | --- | --- |
 | API client (`get`, `post`, ..., `ApiError`) | Same-origin requests with Warren's CSRF header; form errors come back per field; a 401 calls the app's `onUnauthorized`. |
-| `Session`, `Toasts`, `changes` | Who is signed in, toasts with an optional action (Undo), and "the data changed" so screens reload. |
+| `Session`, `Toasts`, `changes` | Who is signed in, toasts with an optional action (Undo), and "the data changed" so screens reload. `timed: false` leaves the timing to warren/burrow's `Toast`. |
 | `loaded` | A screen's data by address, cached: a screen opened before shows its last data at once and refreshes underneath, so going back is instant. |
 | `pageTransition` | Screen changes like a native app's: deeper screens slide in from the right, back slides them away, the nav's own screens cross-fade, the nav stays put. View Transitions API; `motion.css` holds the animations. |
 | `dragToDismiss`, `swipeBack` | Pull a sheet down to close it; swipe in from the left edge to go back (for iPhone home-screen apps, which have no back gesture). |
@@ -49,7 +49,7 @@ The app's web client depends on Warren too, at the same commit as its server, wi
 | `warren/burrow/burrow.css` | Burrow's `bh-*` component classes. Import it into a layer (`@import 'warren/burrow/burrow.css' layer(components);`) so the app's own styles win. The fonts are the app's to bundle. |
 | Art (`mascotSVG`, `traceSVG`, `trailSVG`, `worldSVG`, `HAB`, `TRAIL`, `ICONS`, ...) | The animals, traces, trails, habitats and icons as SVG strings, with their types (`Character`, `Mood`, `TraceName`, `TrailKind`, `IconName`...). |
 | `stashArt`, `wreathArt` | A fund's stash with 0 to 15 acorns and the month's wreath with 0 to 26 leaves lit. |
-| `Mascot`, `Trace`, `Habitat`, `Peek`, `World`, `Breadcrumbs`, `TunnelRow`, `Loader` | Svelte components over Burrow's classes, the same in every app. |
+| `Mascot`, `Trace`, `Habitat`, `Peek`, `World`, `Breadcrumbs`, `TunnelRow`, `Loader`, `Toast` | Svelte components over Burrow's classes, the same in every app. `Toast` takes the nav's place and swipes away. |
 
 Import it like `warren/web`: `import { Habitat, Mascot, type Mood } from 'warren/burrow'`, and the CSS from the app's stylesheet.
 
